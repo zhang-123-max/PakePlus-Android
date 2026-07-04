@@ -1,0 +1,3689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📦 钢材管理系统 V8.2</title>
+    <style>
+        /* ===== 全局样式 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary: #2563eb;
+            --primary-light: #dbeafe;
+            --primary-dark: #1d4ed8;
+            --success: #16a34a;
+            --success-light: #dcfce7;
+            --warning: #f59e0b;
+            --warning-light: #fef3c7;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --purple: #8b5cf6;
+            --purple-light: #ede9fe;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --radius: 12px;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+            --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        body {
+            background: var(--gray-100);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            font-family: "Inter", "Microsoft YaHei", sans-serif;
+            color: var(--gray-800);
+        }
+        .app-wrapper {
+            max-width: 1520px;
+            width: 100%;
+            background: #fff;
+            border-radius: 20px;
+            box-shadow: 0 12px 48px rgba(0, 0, 0, 0.06);
+            padding: 24px 32px 36px;
+        }
+        /* ===== 登录 ===== */
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+            animation: fadeIn 0.35s ease;
+        }
+        .login-overlay.hidden {
+            display: none;
+        }
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.96)
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1)
+            }
+        }
+        .login-card {
+            background: #fff;
+            border-radius: 24px;
+            padding: 44px 40px 36px;
+            width: 400px;
+            max-width: 100%;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.20);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--purple));
+        }
+        .login-card .logo {
+            font-size: 48px;
+            margin-bottom: 4px;
+        }
+        .login-card h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 4px;
+        }
+        .login-card .sub {
+            color: var(--gray-500);
+            font-size: 14px;
+            margin-bottom: 28px;
+        }
+        .login-card .form-group {
+            text-align: left;
+            margin-bottom: 18px;
+        }
+        .login-card .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 5px;
+        }
+        .login-card .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--gray-300);
+            border-radius: 10px;
+            font-size: 15px;
+            background: var(--gray-50);
+        }
+        .login-card .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+        .login-card .btn-login {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+            background: var(--primary);
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 6px;
+        }
+        .login-card .btn-login:hover {
+            background: var(--primary-dark);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.30);
+        }
+        .login-card .login-error {
+            color: var(--danger);
+            font-size: 14px;
+            margin-top: 12px;
+            min-height: 24px;
+            font-weight: 500;
+        }
+        /* ===== 头部 ===== */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--gray-100);
+        }
+        .app-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .app-header h1 small {
+            font-size: 14px;
+            font-weight: 400;
+            color: var(--gray-400);
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .user-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--gray-50);
+            padding: 6px 16px 6px 14px;
+            border-radius: 30px;
+            border: 1px solid var(--gray-200);
+            font-size: 13px;
+            color: var(--gray-700);
+        }
+        .user-badge .role-tag {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 30px;
+            text-transform: uppercase;
+        }
+        .role-tag.admin {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+        }
+        .role-tag.employee {
+            background: var(--gray-200);
+            color: var(--gray-600);
+        }
+        .btn-logout {
+            background: transparent;
+            border: 1px solid var(--gray-300);
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-600);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .btn-logout:hover {
+            background: var(--danger);
+            color: #fff;
+            border-color: var(--danger);
+        }
+        /* ===== 导航 ===== */
+        .nav-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2px;
+            margin-bottom: 28px;
+            padding-bottom: 2px;
+            border-bottom: 2px solid var(--gray-200);
+            overflow-x: auto;
+        }
+        .nav-tab {
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray-500);
+            background: transparent;
+            border: none;
+            border-radius: var(--radius) var(--radius) 0 0;
+            cursor: pointer;
+            transition: var(--transition);
+            border-bottom: 3px solid transparent;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .nav-tab:hover:not(.hidden-tab) {
+            color: var(--gray-800);
+            background: var(--gray-50);
+        }
+        .nav-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: var(--primary-light);
+        }
+        .nav-tab .badge {
+            background: var(--gray-200);
+            color: var(--gray-600);
+            border-radius: 30px;
+            padding: 0 10px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 4px;
+            min-width: 20px;
+            text-align: center;
+        }
+        .nav-tab.active .badge {
+            background: var(--primary);
+            color: #fff;
+        }
+        .nav-tab.hidden-tab {
+            display: none !important;
+        }
+        /* ===== 页面容器 ===== */
+        .page {
+            display: none;
+            animation: fadeUp 0.3s ease;
+        }
+        .page.active {
+            display: block;
+        }
+        @keyframes fadeUp {
+            0% {
+                opacity: 0;
+                transform: translateY(12px)
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+        /* ===== 通用组件 ===== */
+        .param-box,
+        .summary-filters {
+            background: var(--gray-50);
+            border-radius: var(--radius);
+            padding: 16px 24px;
+            margin-bottom: 16px;
+            border: 1px solid var(--gray-200);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 16px 28px;
+        }
+        .param-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: var(--gray-600);
+            flex-wrap: wrap;
+        }
+        .param-item strong {
+            color: var(--gray-800);
+            font-weight: 600;
+        }
+        .param-item .value {
+            font-weight: 700;
+            color: var(--primary);
+            background: var(--primary-light);
+            padding: 2px 16px;
+            border-radius: 30px;
+            font-size: 15px;
+        }
+        .param-item select,
+        .param-item input[type="number"],
+        .param-item input[type="date"],
+        .param-item input[type="text"] {
+            padding: 6px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 14px;
+            background: #fff;
+        }
+        .param-item select:focus,
+        .param-item input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+        .param-item input[type="number"] {
+            width: 90px;
+            text-align: center;
+        }
+        .param-item input[type="number"]:disabled {
+            background: var(--gray-100);
+            color: var(--gray-400);
+        }
+        .param-item .spec-hint {
+            font-size: 13px;
+            color: var(--gray-400);
+            margin-left: 2px;
+        }
+        .param-item .unit-label {
+            font-size: 13px;
+            color: var(--gray-400);
+        }
+        .summary-filters .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: var(--gray-600);
+            flex-wrap: wrap;
+        }
+        .summary-filters .filter-item input,
+        .summary-filters .filter-item select {
+            padding: 6px 10px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 13px;
+            background: #fff;
+        }
+        .input-area {
+            background: #fafcff;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            padding: 18px 22px;
+            margin-bottom: 16px;
+        }
+        .input-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 12px 16px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .input-group label {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+        }
+        .input-group input,
+        .input-group select {
+            padding: 8px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 14px;
+            background: #fff;
+            width: 130px;
+        }
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+        }
+        .input-group input[type="number"] {
+            width: 110px;
+        }
+        .input-group input:disabled {
+            background: var(--gray-100);
+            color: var(--gray-400);
+        }
+        .input-group .hint-zero {
+            font-size: 10px;
+            color: var(--gray-400);
+            font-weight: 400;
+        }
+        .hint-text {
+            font-size: 12px;
+            color: var(--gray-400);
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px dashed var(--gray-200);
+        }
+        .btn {
+            padding: 8px 22px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            background: var(--gray-200);
+            color: var(--gray-700);
+        }
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+        }
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            box-shadow: 0 4px 16px rgba(37, 99, 235, 0.30);
+        }
+        .btn-success {
+            background: var(--success);
+            color: #fff;
+        }
+        .btn-success:hover {
+            background: #15803d;
+            box-shadow: 0 4px 16px rgba(22, 163, 74, 0.30);
+        }
+        .btn-danger {
+            background: var(--danger);
+            color: #fff;
+        }
+        .btn-danger:hover {
+            background: #dc2626;
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.30);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--gray-300);
+            color: var(--gray-600);
+        }
+        .btn-outline:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-400);
+        }
+        .btn-warning {
+            background: var(--warning);
+            color: #fff;
+        }
+        .btn-warning:hover {
+            background: #d97706;
+            box-shadow: 0 4px 16px rgba(245, 158, 11, 0.30);
+        }
+        .btn-purple {
+            background: var(--purple);
+            color: #fff;
+        }
+        .btn-purple:hover {
+            background: #7c3aed;
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.30);
+        }
+        .btn-excel {
+            background: #217346;
+            color: #fff;
+        }
+        .btn-excel:hover {
+            background: #1a5c38;
+            box-shadow: 0 4px 16px rgba(33, 115, 70, 0.30);
+        }
+        .btn-sm {
+            padding: 5px 14px;
+            font-size: 12px;
+        }
+        .action-bar {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0px;
+            margin-bottom: 8px;
+        }
+        .action-bar .left {
+            font-weight: 600;
+            color: var(--gray-800);
+            font-size: 15px;
+        }
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+            background: #fff;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            min-width: 720px;
+        }
+        th {
+            background: var(--gray-50);
+            color: var(--gray-700);
+            font-weight: 600;
+            padding: 12px;
+            text-align: center;
+            border-bottom: 2px solid var(--gray-200);
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        td {
+            padding: 10px 12px;
+            text-align: center;
+            border-bottom: 1px solid var(--gray-100);
+            vertical-align: middle;
+            color: var(--gray-700);
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:hover td {
+            background: var(--gray-50);
+        }
+        .empty-row td {
+            padding: 40px 0;
+            color: var(--gray-400);
+            font-size: 14px;
+            font-style: italic;
+        }
+        .col-qty {
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
+        .col-spec {
+            font-weight: 500;
+            color: var(--gray-800);
+        }
+        .type-pickup {
+            color: var(--danger);
+            font-weight: 600;
+        }
+        .type-storage {
+            color: var(--success);
+            font-weight: 600;
+        }
+        .total-weight {
+            margin-top: 12px;
+            padding: 14px 24px;
+            background: var(--gray-50);
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 20px;
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--gray-800);
+            flex-wrap: wrap;
+        }
+        .total-weight .num-badge {
+            background: var(--primary);
+            color: #fff;
+            padding: 4px 28px;
+            border-radius: 30px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .total-weight .num-badge.gray {
+            background: var(--gray-600);
+            font-size: 16px;
+            padding: 4px 20px;
+        }
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+        .summary-stats .stat-card {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            text-align: center;
+            border: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+        .summary-stats .stat-card:hover {
+            border-color: var(--gray-300);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        .summary-stats .stat-card .num {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gray-900);
+            line-height: 1.2;
+        }
+        .summary-stats .stat-card .label {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+        .summary-stats .stat-card.blue .num {
+            color: var(--primary);
+        }
+        .summary-stats .stat-card.green .num {
+            color: var(--success);
+        }
+        .summary-stats .stat-card.red .num {
+            color: var(--danger);
+        }
+        .summary-stats .stat-card.purple .num {
+            color: var(--purple);
+        }
+        .summary-stats .stat-card.orange .num {
+            color: var(--warning);
+        }
+        .data-mgr-box {
+            background: var(--gray-50);
+            border-radius: var(--radius);
+            padding: 20px 24px;
+            border: 1px solid var(--gray-200);
+            margin-bottom: 24px;
+        }
+        .data-mgr-box .title {
+            font-weight: 600;
+            font-size: 16px;
+            color: var(--gray-900);
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .data-mgr-box .input-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 12px 18px;
+            margin-bottom: 12px;
+        }
+        .data-mgr-box .input-group input {
+            width: 200px;
+        }
+        .data-mgr-box .list-box {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            background: #fff;
+        }
+        .data-mgr-box .list-box table {
+            min-width: auto;
+            font-size: 13px;
+        }
+        .data-mgr-box .list-box th {
+            background: var(--gray-50);
+            padding: 8px 14px;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        .data-mgr-box .list-box td {
+            padding: 8px 14px;
+            font-size: 13px;
+        }
+        .del-item {
+            color: var(--danger);
+            cursor: pointer;
+            font-weight: 600;
+            background: none;
+            border: none;
+            font-size: 13px;
+            transition: var(--transition);
+        }
+        .del-item:hover {
+            color: #dc2626;
+            text-decoration: underline;
+        }
+        .add-material-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px 20px;
+            background: var(--gray-50);
+            padding: 20px 24px;
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+            margin-bottom: 24px;
+        }
+        .add-material-form .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .add-material-form .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray-600);
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+        }
+        .add-material-form .form-group input,
+        .add-material-form .form-group select {
+            padding: 8px 12px;
+            border: 1px solid var(--gray-300);
+            border-radius: 8px;
+            font-size: 14px;
+            background: #fff;
+        }
+        .add-material-form .form-actions {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 12px;
+            margin-top: 6px;
+        }
+        .material-list-box {
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            overflow: hidden;
+            max-height: 280px;
+            overflow-y: auto;
+        }
+        .material-list-box table {
+            min-width: auto;
+            font-size: 13px;
+        }
+        .material-list-box th {
+            background: var(--gray-50);
+            padding: 8px 14px;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+        .material-list-box td {
+            padding: 8px 14px;
+            font-size: 13px;
+        }
+        .del-mat {
+            color: var(--danger);
+            cursor: pointer;
+            font-weight: 600;
+            background: none;
+            border: none;
+            font-size: 13px;
+            transition: var(--transition);
+        }
+        .del-mat:hover {
+            color: #dc2626;
+            text-decoration: underline;
+        }
+        .data-center-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+            margin: 16px 0 20px;
+        }
+        .dc-card {
+            background: #fff;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            padding: 20px 24px 24px;
+            transition: var(--transition);
+        }
+        .dc-card:hover {
+            border-color: var(--gray-300);
+            box-shadow: var(--shadow);
+        }
+        .dc-card h3 {
+            font-size: 17px;
+            margin: 0 0 6px 0;
+            color: var(--gray-900);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .dc-card p {
+            font-size: 14px;
+            color: var(--gray-500);
+            margin: 0 0 16px 0;
+            line-height: 1.6;
+        }
+        .dc-card .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .dc-card .btn-group .btn {
+            flex: 1 0 auto;
+        }
+        .dc-status {
+            margin-top: 12px;
+            padding: 14px 20px;
+            background: var(--gray-50);
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+            font-size: 14px;
+            color: var(--gray-600);
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .dc-status .stat-item {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+        }
+        .dc-status .stat-item .num {
+            font-weight: 700;
+            color: var(--gray-900);
+        }
+        .dc-import-area {
+            margin-top: 12px;
+            padding: 12px 16px;
+            background: var(--warning-light);
+            border: 1px dashed var(--warning);
+            border-radius: 8px;
+            display: none;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+        .dc-import-area.show {
+            display: flex;
+        }
+        #dcMessage {
+            margin-top: 12px;
+            padding: 12px 18px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            display: none;
+        }
+        #dcMessage.show {
+            display: block;
+        }
+        #dcMessage.success {
+            background: var(--success-light);
+            color: #166534;
+            border-left: 4px solid var(--success);
+        }
+        #dcMessage.error {
+            background: var(--danger-light);
+            color: #991b1b;
+            border-left: 4px solid var(--danger);
+        }
+        #dcMessage.info {
+            background: var(--primary-light);
+            color: #1e40af;
+            border-left: 4px solid var(--primary);
+        }
+        .label-print-container {
+            display: none;
+            padding: 10px;
+        }
+        .label-item {
+            display: inline-block;
+            width: 40mm;
+            height: 60mm;
+            border: 1px solid #ccc;
+            margin: 2mm;
+            padding: 3mm 2mm;
+            box-sizing: border-box;
+            font-size: 8pt;
+            text-align: center;
+            vertical-align: top;
+            page-break-inside: avoid;
+            background: #fff;
+        }
+        .label-item .label-title {
+            font-size: 9pt;
+            font-weight: 700;
+            color: var(--gray-900);
+            margin-bottom: 1mm;
+        }
+        .label-item .label-row {
+            font-size: 7.5pt;
+            line-height: 1.6;
+            color: var(--gray-700);
+        }
+        .label-item .label-row .label-key {
+            color: var(--gray-400);
+            font-weight: 400;
+        }
+        .label-item .label-row .label-value {
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+        .label-item .label-spec {
+            font-size: 9pt;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .label-item .label-size {
+            font-size: 8.5pt;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+        .label-item .label-type {
+            font-size: 7pt;
+            font-weight: 500;
+            color: var(--gray-500);
+            background: var(--gray-100);
+            padding: 0 6px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .label-item .label-footer {
+            font-size: 5.5pt;
+            color: var(--gray-400);
+            margin-top: 1mm;
+            border-top: 1px dashed var(--gray-200);
+            padding-top: 1mm;
+        }
+        .user-mgr-box {
+            margin-top: 16px;
+            padding: 16px 20px;
+            background: #fff;
+            border-radius: var(--radius);
+            border: 1px solid var(--gray-200);
+        }
+        .user-mgr-box .title {
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--gray-800);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .user-mgr-box .user-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 16px;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .user-mgr-box .user-row:last-child {
+            border-bottom: none;
+        }
+        .user-mgr-box .user-row .uname {
+            font-weight: 600;
+            min-width: 100px;
+        }
+        .user-mgr-box .user-row .urole {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 12px;
+            border-radius: 30px;
+        }
+        .user-mgr-box .user-row .urole.admin {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+        }
+        .user-mgr-box .user-row .urole.employee {
+            background: var(--gray-200);
+            color: var(--gray-600);
+        }
+        .user-mgr-box .add-user-form {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 10px 14px;
+            padding: 12px 0 4px;
+            border-top: 1px dashed var(--gray-200);
+            margin-top: 8px;
+        }
+        .user-mgr-box .add-user-form .input-group {
+            flex: 1 0 120px;
+        }
+        .user-mgr-box .add-user-form .input-group input,
+        .user-mgr-box .add-user-form .input-group select {
+            width: 100%;
+            min-width: 100px;
+        }
+
+        /* ===== 财务统计专用 ===== */
+        .finance-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+        .finance-stats .stat-card {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 16px 18px;
+            text-align: center;
+            border: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+        .finance-stats .stat-card:hover {
+            border-color: var(--gray-300);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+        .finance-stats .stat-card .num {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--gray-900);
+            line-height: 1.2;
+        }
+        .finance-stats .stat-card .label {
+            font-size: 12px;
+            color: var(--gray-500);
+            margin-top: 4px;
+            font-weight: 500;
+        }
+        .finance-stats .stat-card.blue .num {
+            color: var(--primary);
+        }
+        .finance-stats .stat-card.green .num {
+            color: var(--success);
+        }
+        .finance-stats .stat-card.red .num {
+            color: var(--danger);
+        }
+        .finance-stats .stat-card.purple .num {
+            color: var(--purple);
+        }
+        .finance-stats .stat-card.orange .num {
+            color: var(--warning);
+        }
+
+        /* ===== 折叠面板样式 ===== */
+        .detail-collapse {
+            margin-top: 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--radius);
+            background: #fff;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+        .detail-collapse summary {
+            padding: 14px 22px;
+            font-weight: 600;
+            font-size: 15px;
+            color: var(--gray-800);
+            cursor: pointer;
+            background: var(--gray-50);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            user-select: none;
+            transition: var(--transition);
+            list-style: none;
+        }
+        .detail-collapse summary::-webkit-details-marker {
+            display: none;
+        }
+        .detail-collapse summary::before {
+            content: '▶';
+            font-size: 12px;
+            transition: transform 0.25s ease;
+            color: var(--gray-400);
+        }
+        .detail-collapse[open] summary::before {
+            transform: rotate(90deg);
+        }
+        .detail-collapse summary:hover {
+            background: var(--gray-100);
+        }
+        .detail-collapse .badge-count {
+            background: var(--primary);
+            color: #fff;
+            border-radius: 30px;
+            padding: 0 14px;
+            font-size: 13px;
+            font-weight: 700;
+            line-height: 26px;
+            min-width: 30px;
+            text-align: center;
+        }
+        .detail-collapse .badge-count.zero {
+            background: var(--gray-300);
+            color: var(--gray-600);
+        }
+        .detail-collapse .collapse-body {
+            padding: 0;
+            background: #fff;
+        }
+        .detail-collapse .collapse-body .table-wrap {
+            border: none;
+            border-radius: 0;
+            border-top: 1px solid var(--gray-200);
+        }
+        .detail-collapse .collapse-body .total-weight {
+            margin-top: 0;
+            border-radius: 0;
+            border-left: none;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        /* ===== 备注筛选 ===== */
+        .filter-remark-input {
+            width: 160px !important;
+        }
+
+        /* ===== 打印 ===== */
+        @media print {
+            .no-print {
+                display: none !important
+            }
+            .login-overlay {
+                display: none !important
+            }
+            .nav-tabs {
+                display: none !important
+            }
+            .input-area {
+                display: none !important
+            }
+            .action-bar .toolbar {
+                display: none !important
+            }
+            .btn {
+                display: none !important
+            }
+            .user-mgr-box {
+                display: none !important
+            }
+            .data-center-grid {
+                display: none !important
+            }
+            .dc-status {
+                display: none !important
+            }
+            .label-print-container {
+                display: block !important
+            }
+            .summary-filters .filter-item .btn {
+                display: none !important
+            }
+            .finance-stats {
+                display: none !important
+            }
+            .param-box {
+                display: none !important
+            }
+            .detail-collapse summary {
+                display: none !important
+            }
+            .detail-collapse .collapse-body {
+                display: block !important
+            }
+            .detail-collapse {
+                border: none !important
+            }
+            .detail-collapse .collapse-body .table-wrap {
+                border: 1px solid #ccc !important
+            }
+            .total-weight {
+                display: flex !important
+            }
+        }
+
+        /* ===== 响应式 ===== */
+        @media (max-width:768px) {
+            .app-wrapper {
+                padding: 16px 14px
+            }
+            .login-card {
+                padding: 32px 24px;
+                width: 100%;
+                max-width: 380px
+            }
+            .nav-tab {
+                padding: 8px 14px;
+                font-size: 13px
+            }
+            .add-material-form {
+                grid-template-columns: 1fr 1fr
+            }
+            .summary-stats {
+                grid-template-columns: 1fr 1fr
+            }
+            .data-center-grid {
+                grid-template-columns: 1fr
+            }
+            .input-group input,
+            .input-group select {
+                width: 100px;
+                font-size: 13px
+            }
+            .input-group input[type="number"] {
+                width: 80px
+            }
+            .action-bar {
+                flex-direction: column;
+                align-items: stretch
+            }
+            .dc-status {
+                flex-direction: column
+            }
+            .finance-stats {
+                grid-template-columns: 1fr 1fr
+            }
+            .detail-collapse summary {
+                font-size: 14px;
+                padding: 12px 16px;
+            }
+        }
+        @media (max-width:480px) {
+            .add-material-form {
+                grid-template-columns: 1fr
+            }
+            .summary-stats {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px
+            }
+            .summary-stats .stat-card {
+                padding: 12px 10px
+            }
+            .summary-stats .stat-card .num {
+                font-size: 22px
+            }
+            .nav-tab {
+                padding: 6px 10px;
+                font-size: 12px
+            }
+            .login-card h2 {
+                font-size: 20px
+            }
+            .finance-stats {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px
+            }
+            .finance-stats .stat-card {
+                padding: 12px 10px
+            }
+            .finance-stats .stat-card .num {
+                font-size: 22px
+            }
+            .detail-collapse summary {
+                font-size: 13px;
+                padding: 10px 12px;
+            }
+            .filter-remark-input {
+                width: 120px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== 登录覆盖层 ===== -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-card">
+            <div class="logo">🔐</div>
+            <h2>钢材管理系统</h2>
+            <p class="sub">请输入您的账号和密码</p>
+            <div class="form-group"><label>用户名</label><input type="text" id="loginUsername" value="admin"></div>
+            <div class="form-group"><label>密码</label><input type="password" id="loginPassword" value="admin123"></div>
+            <button class="btn-login" id="loginBtn">登 录</button>
+            <div class="login-error" id="loginError"></div>
+        </div>
+    </div>
+
+    <!-- ===== 主应用 ===== -->
+    <div class="app-wrapper" id="app" style="display:none;">
+        <!-- 头部 -->
+        <div class="app-header">
+            <div class="header-left"><h1>📦 钢材管理系统 <small>V8.2 · 领料 · 入库 · 财务</small></h1></div>
+            <div class="header-right no-print">
+                <div class="user-badge"><span>👤 <span id="headerUsername">admin</span></span><span class="role-tag admin" id="headerRoleTag">管理员</span></div>
+                <button class="btn-logout" id="logoutBtn">🚪 登出</button>
+            </div>
+        </div>
+
+        <!-- 导航 -->
+        <div class="nav-tabs no-print">
+            <button class="nav-tab active" data-page="page-pickup">📋 领料单 <span class="badge" id="pickupCount">0</span></button>
+            <button class="nav-tab" data-page="page-storage">📥 入库单 <span class="badge" id="storageCount">0</span></button>
+            <button class="nav-tab" data-page="page-detail">📋 进出库详情</button>
+            <button class="nav-tab" data-page="page-finance">💰 财务统计</button>
+            <button class="nav-tab" data-page="page-inventory">📊 即时库存</button>
+            <button class="nav-tab admin-only" data-page="page-projects">📁 项目管理</button>
+            <button class="nav-tab admin-only" data-page="page-persons">👤 领料人管理</button>
+            <button class="nav-tab admin-only" data-page="page-add-material">➕ 新增物料</button>
+            <button class="nav-tab admin-only" data-page="page-datacenter">💾 数据中心</button>
+        </div>
+
+        <!-- ===== 页面：领料单 ===== -->
+        <div class="page active" id="page-pickup">
+            <div class="param-box">
+                <div class="param-item"><strong>物料品类</strong><select id="pickupMaterialSelect" style="min-width:240px;"></select><span class="spec-hint" id="pickupSpecDisplay"></span></div>
+                <div class="param-item"><strong>厚度 (mm)</strong><input type="number" id="pickupThickness" value="3" min="0.1" step="0.1"><span class="unit-label" id="pickupThicknessUnit">(板材用)</span></div>
+                <div class="param-item"><strong id="pickupWeightLabel">每㎡重量</strong><span class="value" id="pickupWeightPerUnit">23.55</span><span id="pickupWeightUnit">KG</span></div>
+                <div class="param-item"><strong>领料日期</strong><input type="date" id="pickupDate"></div>
+            </div>
+            <div class="input-area">
+                <div class="input-row">
+                    <div class="input-group"><label>物料名称</label><input type="text" id="pickupNameInput" placeholder="自动填充" style="width:150px;"></div>
+                    <div class="input-group"><label>规格</label><input type="text" id="pickupSpecInput" placeholder="自动填充" style="width:120px;"></div>
+                    <div class="input-group"><label>项目</label><select id="pickupProject" style="width:120px;"><option value="">-- 选择 --</option></select></div>
+                    <div class="input-group"><label>领料人</label><select id="pickupPerson" style="width:120px;"><option value="">-- 选择 --</option></select></div>
+                    <div class="input-group"><label>数量 <span class="hint-zero">（张/根）</span></label><input type="number" id="pickupQty" placeholder="如 5" min="1" step="1" value="1"></div>
+                    <div class="input-group" id="pickupStockGroup"><label>在库尺寸</label><select id="pickupStockSize" style="width:150px;"><option value="">-- 选择库存 --</option></select></div>
+                    <div class="input-group"><label>领料长度 (mm)</label><input type="number" id="pickupRealLen" placeholder="如 2000" min="1" step="1"></div>
+                    <div class="input-group"><label id="pickupWidthLabel">领料宽度 (mm)</label><input type="number" id="pickupRealWid" placeholder="如 1500" min="1" step="1"></div>
+                    <div class="input-group"><label>退库长度 (mm) <span class="hint-zero">（可为0）</span></label><input type="number" id="pickupRetLen" placeholder="0" min="0" step="1" value="0"></div>
+                    <div class="input-group"><label id="pickupRetWidLabel">退库宽度 (mm) <span class="hint-zero">（可为0）</span></label><input type="number" id="pickupRetWid" placeholder="0" min="0" step="1" value="0"></div>
+                    <div class="input-group" style="justify-content:flex-end;"><button class="btn btn-primary" id="pickupAddBtn">➕ 添加领料</button></div>
+                </div>
+                <div class="hint-text" id="pickupHint">⚡ 板材：长×宽算面积；型材：宽度自动1000mm | 退库将自动生成入库单（备注：生产退库）</div>
+            </div>
+
+            <details class="detail-collapse" id="pickupCollapse" open>
+                <summary>
+                    <span>📋 领料明细</span>
+                    <span class="badge-count" id="pickupCollapseBadge">0</span>
+                    <span style="flex:1;"></span>
+                    <span style="font-weight:400;font-size:13px;color:var(--gray-400);">点击展开/收起</span>
+                </summary>
+                <div class="collapse-body">
+                    <div class="action-bar"><div class="left"></div><div class="toolbar no-print"><button class="btn btn-success" id="pickupPrintBtn">🖨️ 打印</button><button class="btn btn-excel" id="pickupExcelBtn">📊 导出Excel</button><button class="btn btn-outline btn-sm admin-only" id="pickupClearBtn">🗑️ 清空全部</button></div></div>
+                    <div class="table-wrap"><table><thead><tr><th>领料日期</th><th>项目</th><th>领料人</th><th>物料名称</th><th class="col-spec">规格</th><th class="col-qty">数量</th><th>领料长</th><th>领料宽</th><th>退库长</th><th>退库宽</th><th>项目用料面积(㎡)</th><th>领料重量(KG)</th><th>项目用料重量(KG)</th><th>产线退库重量(KG)</th><th class="no-print">操作</th></tr></thead><tbody id="pickupTableBody"><tr class="empty-row"><td colspan="15">暂无领料明细</td></tr></tbody></table></div>
+                    <div class="total-weight">领料合计总重量：<span class="num-badge" id="pickupTotalWeight">0.00</span> KG &nbsp;|&nbsp; 总数量：<span class="num-badge gray" id="pickupTotalQty">0</span> 件</div>
+                </div>
+            </details>
+        </div>
+
+        <!-- ===== 页面：入库单 ===== -->
+        <div class="page" id="page-storage">
+            <div class="param-box">
+                <div class="param-item"><strong>物料品类</strong><select id="storageMaterialSelect" style="min-width:240px;"></select><span class="spec-hint" id="storageSpecDisplay"></span></div>
+                <div class="param-item"><strong>厚度 (mm)</strong><input type="number" id="storageThickness" value="3" min="0.1" step="0.1"><span class="unit-label" id="storageThicknessUnit">(板材用)</span></div>
+                <div class="param-item"><strong id="storageWeightLabel">每㎡重量</strong><span class="value" id="storageWeightPerUnit">23.55</span><span id="storageWeightUnit">KG</span></div>
+                <div class="param-item"><strong>入库日期</strong><input type="date" id="storageDate"></div>
+                <div class="param-item"><strong>🔍 备注筛选</strong><input type="text" id="storageRemarkFilter" placeholder="输入备注关键词" class="filter-remark-input" style="width:160px;"></div>
+            </div>
+            <div class="input-area">
+                <div class="input-row">
+                    <div class="input-group"><label>物料名称</label><input type="text" id="storageNameInput" placeholder="自动填充" style="width:150px;"></div>
+                    <div class="input-group"><label>规格</label><input type="text" id="storageSpecInput" placeholder="自动填充" style="width:120px;"></div>
+                    <div class="input-group"><label>数量 <span class="hint-zero">（张/根）</span></label><input type="number" id="storageQty" placeholder="如 5" min="1" step="1" value="1"></div>
+                    <div class="input-group"><label>长度 (mm)</label><input type="number" id="storageLen" placeholder="如 2000" min="1" step="1"></div>
+                    <div class="input-group" id="storageWidthGroup"><label id="storageWidthLabel">宽度 (mm)</label><input type="number" id="storageWid" placeholder="如 1500" min="1" step="1"></div>
+                    <div class="input-group"><label>备注</label><input type="text" id="storageRemark" placeholder="如：采购入库" style="width:130px;"></div>
+                    <div class="input-group" style="justify-content:flex-end;"><button class="btn btn-success" id="storageAddBtn">📥 添加入库</button></div>
+                </div>
+                <div class="hint-text" id="storageHint">⚡ 板材：长×宽算面积；型材：宽度可空（按1米计算）</div>
+            </div>
+
+            <details class="detail-collapse" id="storageCollapse" open>
+                <summary>
+                    <span>📥 入库明细</span>
+                    <span class="badge-count" id="storageCollapseBadge">0</span>
+                    <span style="flex:1;"></span>
+                    <span style="font-weight:400;font-size:13px;color:var(--gray-400);">点击展开/收起</span>
+                </summary>
+                <div class="collapse-body">
+                    <div class="action-bar"><div class="left"></div><div class="toolbar no-print"><button class="btn btn-success" id="storagePrintBtn">🖨️ 打印</button><button class="btn btn-excel" id="storageExcelBtn">📊 导出Excel</button><button class="btn btn-outline btn-sm admin-only" id="storageClearBtn">🗑️ 清空全部</button></div></div>
+                    <div class="table-wrap"><table><thead><tr><th>入库日期</th><th>物料名称</th><th class="col-spec">规格</th><th>厚度 (mm)</th><th>单位重量 (KG)</th><th class="col-qty">数量</th><th>长度</th><th>宽度</th><th>单件面积(㎡)</th><th>总重量(KG)</th><th>备注</th><th class="no-print">操作</th></tr></thead><tbody id="storageTableBody"><tr class="empty-row"><td colspan="12">暂无入库明细</td></tr></tbody></table></div>
+                    <div class="total-weight">入库合计总重量：<span class="num-badge" id="storageTotalWeight">0.00</span> KG &nbsp;|&nbsp; 总数量：<span class="num-badge gray" id="storageTotalQty">0</span> 件</div>
+                </div>
+            </details>
+        </div>
+
+        <!-- ===== 页面：进出库详情 ===== -->
+        <div class="page" id="page-detail">
+            <div class="summary-filters">
+                <div class="filter-item"><label>从</label><input type="date" id="detailFromDate"><label>至</label><input type="date" id="detailToDate"></div>
+                <div class="filter-item"><label>项目</label><select id="detailProjectFilter" style="min-width:120px;"><option value="__ALL__">全部项目</option></select></div>
+                <div class="filter-item"><label>领料人</label><select id="detailPersonFilter" style="min-width:120px;"><option value="__ALL__">全部人员</option></select></div>
+                <div class="filter-item"><label>类型</label><select id="detailTypeFilter" style="min-width:100px;"><option value="__ALL__">全部</option><option value="pickup">领料</option><option value="storage">入库</option></select></div>
+                <div class="filter-item"><button class="btn btn-primary btn-sm" id="detailRefreshBtn">🔄 刷新</button><button class="btn btn-excel btn-sm" id="detailExcelBtn">📊 导出Excel</button><button class="btn btn-outline btn-sm" id="detailPrintBtn">🖨️ 打印</button></div>
+            </div>
+            <div class="summary-stats">
+                <div class="stat-card blue"><div class="num" id="detailTotalPickup">0.00</div><div class="label">实发总重 (KG)</div></div>
+                <div class="stat-card green"><div class="num" id="detailTotalStorage">0.00</div><div class="label">入库总重 (KG)</div></div>
+                <div class="stat-card purple"><div class="num" id="detailTotalRows">0</div><div class="label">记录条数</div></div>
+            </div>
+
+            <details class="detail-collapse" id="detailCollapse" open>
+                <summary>
+                    <span>📋 进出库记录</span>
+                    <span class="badge-count" id="detailCollapseBadge">0</span>
+                    <span style="flex:1;"></span>
+                    <span style="font-weight:400;font-size:13px;color:var(--gray-400);">点击展开/收起</span>
+                </summary>
+                <div class="collapse-body">
+                    <div class="table-wrap"><table><thead><tr><th>日期</th><th>类型</th><th>项目</th><th>领料人</th><th>物料名称</th><th class="col-spec">规格</th><th class="col-qty">数量</th><th>长度</th><th>宽度</th><th>单件面积</th><th>重量(KG)</th><th>备注</th><th class="no-print">操作</th></tr></thead><tbody id="detailTableBody"><tr class="empty-row"><td colspan="13">暂无记录</td></tr></tbody></table></div>
+                    <div class="total-weight" style="justify-content:space-between;"><span style="font-weight:400;color:var(--gray-500);font-size:14px;">&nbsp;</span><span>汇总期间：<span id="detailDateRange">全部</span></span></div>
+                </div>
+            </details>
+        </div>
+
+        <!-- ===== 页面：财务统计 ===== -->
+        <div class="page" id="page-finance">
+            <div class="param-box">
+                <div class="param-item"><strong>📅 统计区间</strong></div>
+                <div class="param-item"><label>从</label><input type="date" id="financeFromDate"><label>至</label><input type="date" id="financeToDate"></div>
+                <div class="param-item"><button class="btn btn-primary btn-sm" id="financeRefreshBtn">🔄 刷新</button><button class="btn btn-excel btn-sm" id="financeExcelBtn">📊 导出Excel</button><button class="btn btn-outline btn-sm" id="financePrintBtn">🖨️ 打印</button></div>
+                <div class="param-item" style="font-size:13px;color:var(--gray-400);margin-left:auto;">💡 期初 = 开始日期前库存结余 &nbsp;|&nbsp; 入库 = 采购入库+自制入库（不含生产退库） &nbsp;|&nbsp; 出库 = 项目用料</div>
+            </div>
+            <div class="finance-stats">
+                <div class="stat-card blue"><div class="num" id="financeTotalBefore">0.00</div><div class="label">📊 期初总重 (KG)</div></div>
+                <div class="stat-card green"><div class="num" id="financeTotalIn">0.00</div><div class="label">📥 入库总重 (KG)</div></div>
+                <div class="stat-card red"><div class="num" id="financeTotalOut">0.00</div><div class="label">📤 出库总重 (KG)</div></div>
+                <div class="stat-card purple"><div class="num" id="financeTotalBalance">0.00</div><div class="label">📦 结存总重 (KG)</div></div>
+            </div>
+
+            <details class="detail-collapse" id="financeCollapse" open>
+                <summary>
+                    <span>💰 财务统计明细</span>
+                    <span class="badge-count" id="financeCollapseBadge">0</span>
+                    <span style="flex:1;"></span>
+                    <span style="font-weight:400;font-size:13px;color:var(--gray-400);">点击展开/收起</span>
+                </summary>
+                <div class="collapse-body">
+                    <div class="table-wrap">
+                        <table><thead><tr><th>物料编码</th><th>物料名称</th><th class="col-spec">规格</th><th>类型</th><th>期初 (KG)</th><th>入库 (KG)</th><th>出库 (KG)</th><th>结存 (KG)</th></tr></thead><tbody id="financeTableBody"><tr class="empty-row"><td colspan="8">请选择时间范围后点击刷新</td></tr></tbody></table>
+                    </div>
+                    <div class="total-weight" style="justify-content:space-between;"><span style="font-weight:400;color:var(--gray-500);font-size:14px;">&nbsp;</span><span>统计期间：<span id="financeDateRange">未选择</span></span></div>
+                </div>
+            </details>
+        </div>
+
+        <!-- ===== 页面：即时库存 ===== -->
+        <div class="page" id="page-inventory">
+            <div class="param-box">
+                <div class="param-item"><strong>📦 即时库存</strong><span style="color:var(--gray-500);font-size:14px;">按物料、规格、尺寸（长×宽）分别统计当前库存</span></div>
+                <div class="param-item"><button class="btn btn-primary btn-sm" id="inventoryRefreshBtn">🔄 刷新</button></div>
+                <div class="param-item"><button class="btn btn-excel btn-sm" id="inventoryExcelBtn">📊 导出Excel</button></div>
+            </div>
+            <div class="summary-stats">
+                <div class="stat-card blue"><div class="num" id="invTotalWeight">0.00</div><div class="label">总库存重量 (KG)</div></div>
+                <div class="stat-card green"><div class="num" id="invTotalQty">0</div><div class="label">总库存数量 (件)</div></div>
+                <div class="stat-card purple"><div class="num" id="invTotalKinds">0</div><div class="label">库存种类数</div></div>
+            </div>
+
+            <details class="detail-collapse" id="inventoryCollapse" open>
+                <summary>
+                    <span>📊 即时库存明细</span>
+                    <span class="badge-count" id="inventoryCollapseBadge">0</span>
+                    <span style="flex:1;"></span>
+                    <span style="font-weight:400;font-size:13px;color:var(--gray-400);">点击展开/收起</span>
+                </summary>
+                <div class="collapse-body">
+                    <div class="table-wrap">
+                        <table><thead><tr><th>物料编码</th><th>物料名称</th><th class="col-spec">规格</th><th>类型</th><th>尺寸 (长×宽 mm)</th><th class="col-qty">即时库存 (件)</th><th>即时库存 (KG)</th></tr></thead><tbody id="inventoryTableBody"><tr class="empty-row"><td colspan="7">暂无库存数据</td></tr></tbody></table>
+                    </div>
+                </div>
+            </details>
+        </div>
+
+        <!-- ===== 页面：项目管理（仅管理员） ===== -->
+        <div class="page" id="page-projects">
+            <div class="data-mgr-box">
+                <div class="title">📁 项目管理</div>
+                <div class="input-row"><div class="input-group"><label>项目名称</label><input type="text" id="newProjectInput" placeholder="如：XX项目"></div><button class="btn btn-primary" id="addProjectBtn">➕ 添加项目</button></div>
+                <div class="list-box"><table><thead><tr><th>序号</th><th>项目名称</th><th class="no-print">操作</th></tr></thead><tbody id="projectListBody"><tr class="empty-row"><td colspan="3">暂无项目</td></tr></tbody></table></div>
+            </div>
+        </div>
+
+        <!-- ===== 页面：领料人管理（仅管理员） ===== -->
+        <div class="page" id="page-persons">
+            <div class="data-mgr-box">
+                <div class="title">👤 领料人管理</div>
+                <div class="input-row"><div class="input-group"><label>领料人姓名</label><input type="text" id="newPersonInput" placeholder="如：张三"></div><button class="btn btn-primary" id="addPersonBtn">➕ 添加领料人</button></div>
+                <div class="list-box"><table><thead><tr><th>序号</th><th>姓名</th><th class="no-print">操作</th></tr></thead><tbody id="personListBody"><tr class="empty-row"><td colspan="3">暂无领料人</td></tr></tbody></table></div>
+            </div>
+        </div>
+
+        <!-- ===== 页面：新增物料（仅管理员） ===== -->
+        <div class="page" id="page-add-material">
+            <div class="add-material-form">
+                <div class="form-group"><label>物料代码 *</label><input type="text" id="newMatCode" placeholder="如 15.01.01.025"></div>
+                <div class="form-group"><label>物料名称 *</label><input type="text" id="newMatName" placeholder="如 钢板/Q235"></div>
+                <div class="form-group"><label>规格 *</label><input type="text" id="newMatSpec" placeholder="如 6MM"></div>
+                <div class="form-group"><label>类型 *</label><select id="newMatType"><option value="plate">板材</option><option value="profile">型材</option></select></div>
+                <div class="form-group" id="newMatDensityGroup"><label>密度 (g/cm³) <span style="font-weight:400;color:var(--gray-400);">(板材用)</span></label><input type="number" id="newMatDensity" value="7.85" step="0.01" min="0.1"></div>
+                <div class="form-group" id="newMatPerMeterGroup" style="display:none;"><label>每米重量 (KG/m) <span style="font-weight:400;color:var(--gray-400);">(型材用)</span></label><input type="number" id="newMatPerMeter" value="5.00" step="0.01" min="0.01"></div>
+                <div class="form-group" style="justify-content:flex-end;"><label>&nbsp;</label><button class="btn btn-primary" id="newMatSubmitBtn">✅ 添加物料</button></div>
+                <div class="form-actions"><span style="font-size:13px;color:var(--gray-400);">💡 添加后自动保存到物料库</span></div>
+            </div>
+            <div style="margin-top:6px;font-weight:600;color:var(--gray-800);margin-bottom:8px;">📦 当前物料库（共 <span id="matCountDisplay">0</span> 种）</div>
+            <div class="material-list-box"><table><thead><tr><th>代码</th><th>名称</th><th>规格</th><th>类型</th><th>密度/每米重</th><th class="no-print">操作</th></tr></thead><tbody id="matListBody"><tr class="empty-row"><td colspan="6">暂无物料</td></tr></tbody></table></div>
+        </div>
+
+        <!-- ===== 页面：数据中心（仅管理员） ===== -->
+        <div class="page" id="page-datacenter">
+            <div class="param-box" style="margin-bottom:12px;"><div class="param-item"><strong>💾 本地数据中心</strong><span style="color:var(--gray-500);font-size:14px;">所有数据存储在 localStorage，可备份/恢复/重置</span></div></div>
+            <div class="dc-status">
+                <div class="stat-item">📦 物料种类：<span class="num" id="dcMatCount">0</span></div>
+                <div class="stat-item">📋 领料记录：<span class="num" id="dcPickupCount">0</span></div>
+                <div class="stat-item">📥 入库记录：<span class="num" id="dcStorageCount">0</span></div>
+                <div class="stat-item">📁 项目数：<span class="num" id="dcProjectCount">0</span></div>
+                <div class="stat-item">👤 领料人数：<span class="num" id="dcPersonCount">0</span></div>
+                <div class="stat-item">📅 最后备份：<span class="num" id="dcLastBackup">未备份</span></div>
+            </div>
+            <div class="data-center-grid">
+                <div class="dc-card"><h3>⬇️ 导出备份</h3><p>导出所有数据为 JSON 文件，便于安全保存。</p><div class="btn-group"><button class="btn btn-primary" id="dcExportBtn">📥 导出全部数据</button></div></div>
+                <div class="dc-card"><h3>⬆️ 导入恢复</h3><p>上传备份文件，完全替换当前数据。</p><div class="btn-group"><button class="btn btn-success" id="dcImportBtn">📤 选择文件导入</button><input type="file" id="dcFileInput" accept=".json" style="display:none;"></div><div id="dcImportArea" class="dc-import-area"><span id="dcFileName">未选择文件</span><button class="btn btn-sm btn-primary" id="dcConfirmImport">确认导入</button><button class="btn btn-sm btn-outline" id="dcCancelImport">取消</button></div></div>
+                <div class="dc-card"><h3>🔄 重置数据</h3><p><strong>清空单据</strong>：仅删除领料和入库记录。<br><strong>恢复出厂</strong>：重置为默认状态。</p><div class="btn-group"><button class="btn btn-warning" id="dcClearRecordsBtn">🗑️ 清空单据</button><button class="btn btn-danger" id="dcResetAllBtn">⚠️ 恢复出厂</button></div></div>
+            </div>
+            <div class="user-mgr-box" id="userMgrBox">
+                <div class="title">👥 用户管理</div>
+                <div id="userListContainer"></div>
+                <div class="add-user-form">
+                    <div class="input-group"><label>用户名</label><input type="text" id="newUserName" placeholder="新用户名"></div>
+                    <div class="input-group"><label>密码</label><input type="text" id="newUserPass" placeholder="密码"></div>
+                    <div class="input-group"><label>角色</label><select id="newUserRole"><option value="employee">员工</option><option value="admin">管理员</option></select></div>
+                    <button class="btn btn-primary btn-sm" id="addUserBtn">➕ 添加用户</button>
+                </div>
+            </div>
+            <div id="dcMessage"></div>
+        </div>
+
+        <!-- 标签打印容器 -->
+        <div class="label-print-container" id="labelPrintContainer"></div>
+    </div>
+
+    <script>
+        // ================================================================
+        // 数据层与认证
+        // ================================================================
+        const STORAGE_KEYS = {
+            materials: 'matMgr_materials',
+            pickups: 'matMgr_pickups',
+            storages: 'matMgr_storages',
+            projects: 'matMgr_projects',
+            persons: 'matMgr_persons',
+            lastBackup: 'matMgr_lastBackup',
+            users: 'matMgr_users',
+            session: 'matMgr_session',
+        };
+        const DEFAULT_USERS = [
+            { username: 'admin', password: 'admin123', role: 'admin' },
+            { username: 'user', password: 'user123', role: 'employee' }
+        ];
+        const Auth = {
+            getUsers() {
+                const raw = localStorage.getItem(STORAGE_KEYS.users);
+                if (raw) { try { return JSON.parse(raw); } catch (e) {} }
+                localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(DEFAULT_USERS));
+                return DEFAULT_USERS.slice();
+            },
+            saveUsers(u) { localStorage.setItem(STORAGE_KEYS.users, JSON.stringify(u)); },
+            getSession() {
+                const raw = localStorage.getItem(STORAGE_KEYS.session);
+                if (raw) { try { return JSON.parse(raw); } catch (e) {} }
+                return null;
+            },
+            setSession(u) { if (u) localStorage.setItem(STORAGE_KEYS.session, JSON.stringify(u)); else localStorage.removeItem(
+                    STORAGE_KEYS.session); },
+            login(username, password) {
+                const users = this.getUsers();
+                const found = users.find(u => u.username === username && u.password === password);
+                if (found) { this.setSession({ username: found.username, role: found.role }); return found; }
+                return null;
+            },
+            logout() { this.setSession(null); },
+            getCurrentUser() { return this.getSession(); },
+            isAdmin() { const u = this.getSession(); return u && u.role === 'admin'; },
+            addUser(username, password, role) {
+                const users = this.getUsers();
+                if (users.find(u => u.username === username)) return false;
+                users.push({ username, password, role });
+                this.saveUsers(users);
+                return true;
+            },
+            deleteUser(username) {
+                const users = this.getUsers();
+                const current = this.getCurrentUser();
+                if (username === current.username) return false;
+                const filtered = users.filter(u => u.username !== username);
+                if (filtered.length === users.length) return false;
+                if (!filtered.some(u => u.role === 'admin')) return false;
+                this.saveUsers(filtered);
+                return true;
+            }
+        };
+
+        // ================================================================
+        // 默认物料 & DataStore
+        // ================================================================
+        const DEFAULT_MATERIALS = [
+            { code: '15.01.01.001', name: '钢板/SPCC', spec: '1MM', type: 'plate', density: 7.85, thickness: 1 },
+            { code: '15.01.01.002', name: '钢板/SPCC', spec: '2MM', type: 'plate', density: 7.85, thickness: 2 },
+            { code: '15.01.01.003', name: '钢板/SPCC', spec: '3MM', type: 'plate', density: 7.85, thickness: 3 },
+            { code: '15.01.01.004', name: '钢板/Q235', spec: '4MM', type: 'plate', density: 7.85, thickness: 4 },
+            { code: '15.01.01.005', name: '钢板/Q235', spec: '5MM', type: 'plate', density: 7.85, thickness: 5 },
+            { code: '15.01.01.006', name: '钢板/Q235', spec: '6MM', type: 'plate', density: 7.85, thickness: 6 },
+            { code: '15.01.01.007', name: '钢板/Q235', spec: '8MM', type: 'plate', density: 7.85, thickness: 8 },
+            { code: '15.01.01.008', name: '钢板/Q355', spec: '10MM', type: 'plate', density: 7.85, thickness: 10 },
+            { code: '15.01.01.009', name: '钢板/Q355', spec: '12MM', type: 'plate', density: 7.85, thickness: 12 },
+            { code: '15.01.01.010', name: '钢板/Q355', spec: '14MM', type: 'plate', density: 7.85, thickness: 14 },
+            { code: '15.01.01.011', name: '钢板/Q355', spec: '16MM', type: 'plate', density: 7.85, thickness: 16 },
+            { code: '15.01.01.012', name: '钢板/Q235', spec: '20MM', type: 'plate', density: 7.85, thickness: 20 },
+            { code: '15.01.01.013', name: '钢板/Q235', spec: '25MM', type: 'plate', density: 7.85, thickness: 25 },
+            { code: '15.01.01.014', name: '钢板/Q235', spec: '30MM', type: 'plate', density: 7.85, thickness: 30 },
+            { code: '15.01.01.015', name: '钢板/Q235', spec: '35MM', type: 'plate', density: 7.85, thickness: 35 },
+            { code: '15.01.01.016', name: '钢板/Q235', spec: '40MM', type: 'plate', density: 7.85, thickness: 40 },
+            { code: '15.01.01.017', name: '钢板/Q235', spec: '45MM', type: 'plate', density: 7.85, thickness: 45 },
+            { code: '15.01.01.018', name: '钢板/Q235', spec: '50MM', type: 'plate', density: 7.85, thickness: 50 },
+            { code: '15.01.01.019', name: '钢板/304', spec: '1MM', type: 'plate', density: 7.93, thickness: 1 },
+            { code: '15.01.01.020', name: '钢板/304', spec: '2MM', type: 'plate', density: 7.93, thickness: 2 },
+            { code: '15.01.01.021', name: '钢板/304', spec: '3MM', type: 'plate', density: 7.93, thickness: 3 },
+            { code: '15.01.01.022', name: '钢板/镀锌', spec: '1MM', type: 'plate', density: 7.85, thickness: 1 },
+            { code: '15.01.01.023', name: '钢板/镀锌', spec: '2MM', type: 'plate', density: 7.85, thickness: 2 },
+            { code: '15.01.01.024', name: '钢板/镀锌', spec: '3MM', type: 'plate', density: 7.85, thickness: 3 },
+            { code: '15.01.01.025', name: '钢板/SPCC', spec: '1.5MM', type: 'plate', density: 7.85, thickness: 1.5 },
+            { code: '15.01.02.001', name: '工字钢/Q235', spec: '180*94*6.5', type: 'profile', perMeterWeight: 24.14 },
+            { code: '15.01.02.002', name: '叉车H型门架型钢(进口)', spec: '152H', type: 'profile', perMeterWeight: 40.8 },
+            { code: '15.01.02.003', name: '工字钢/Q235', spec: '140*80*5.5', type: 'profile', perMeterWeight: 16.89 },
+            { code: '15.01.04.001', name: '方管/Q235', spec: '30*50*2.0', type: 'profile', perMeterWeight: 2.39 },
+            { code: '15.01.04.002', name: '方管/Q235', spec: '100*100*6.5', type: 'profile', perMeterWeight: 19.08 },
+            { code: '15.01.04.003', name: '方管/Q235', spec: '60*60*5.0', type: 'profile', perMeterWeight: 8.64 },
+            { code: '15.01.04.004', name: '方管/Q235', spec: '50*50*3.0', type: 'profile', perMeterWeight: 4.43 },
+            { code: '15.01.04.005', name: '方管/Q235', spec: '50*80*5.0', type: 'profile', perMeterWeight: 9.42 },
+            { code: '15.01.04.006', name: '方管/Q235', spec: '80*160*6', type: 'profile', perMeterWeight: 21.48 },
+            { code: '15.01.04.007', name: '方管/Q235', spec: '60*120*6.0', type: 'profile', perMeterWeight: 15.83 },
+            { code: '15.01.04.008', name: '方管/Q235', spec: '80*80*3.0', type: 'profile', perMeterWeight: 7.25 },
+            { code: '15.01.04.009', name: '方管/Q235', spec: '50*50*1.5', type: 'profile', perMeterWeight: 2.28 },
+            { code: '15.01.04.010', name: '方管/Q235', spec: '60*80*3.0', type: 'profile', perMeterWeight: 6.31 },
+            { code: '15.01.04.011', name: '方管/Q235', spec: '50*50*2.5', type: 'profile', perMeterWeight: 3.73 },
+            { code: '15.01.04.012', name: '方管/Q235', spec: '100*150*6.0', type: 'profile', perMeterWeight: 22.42 },
+            { code: '15.01.04.013', name: '方管/Q235', spec: '60*100*4.0', type: 'profile', perMeterWeight: 9.55 },
+            { code: '15.01.05.001', name: '角钢', spec: '50*50*5.0', type: 'profile', perMeterWeight: 3.77 },
+            { code: '15.01.05.002', name: '槽钢', spec: '80*43*5.0', type: 'profile', perMeterWeight: 8.05 },
+            { code: '15.02.01.001', name: '8080铝型材', spec: '8080', type: 'profile', perMeterWeight: 3.67 },
+        ];
+
+        const DataStore = {
+            getMaterials() {
+                const raw = localStorage.getItem(STORAGE_KEYS.materials);
+                if (raw) { try { return JSON.parse(raw); } catch (e) {} }
+                const def = DEFAULT_MATERIALS.slice();
+                localStorage.setItem(STORAGE_KEYS.materials, JSON.stringify(def));
+                return def;
+            },
+            saveMaterials(m) { localStorage.setItem(STORAGE_KEYS.materials, JSON.stringify(m)); },
+            getPickups() {
+                const raw = localStorage.getItem(STORAGE_KEYS.pickups);
+                if (raw) { try { return JSON.parse(raw); } catch (e) {} }
+                return [];
+            },
+            savePickups(p) { localStorage.setItem(STORAGE_KEYS.pickups, JSON.stringify(p)); },
+            getStorages() {
+                const raw = localStorage.getItem(STORAGE_KEYS.storages);
+                if (raw) { try { return JSON.parse(raw); } catch (e) {} }
+                return [];
+            },
+            saveStorages(s) { localStorage.setItem(STORAGE_KEYS.storages, JSON.stringify(s)); },
+            getProjects() {
+                const raw = localStorage.getItem(STORAGE_KEYS.projects);
+                if (raw) { try { return JSON.parse(raw); } catch (e) {} }
+                return [];
+            },
+            saveProjects(p) { localStorage.setItem(STORAGE_KEYS.projects, JSON.stringify(p)); },
+            getPersons() {
+                const raw = localStorage.getItem(STORAGE_KEYS.persons);
+                if (raw) { try { return JSON.parse(raw); } catch (e) {} }
+                return [];
+            },
+            savePersons(p) { localStorage.setItem(STORAGE_KEYS.persons, JSON.stringify(p)); },
+            getLastBackup() { return localStorage.getItem(STORAGE_KEYS.lastBackup) || null; },
+            setLastBackup(d) { localStorage.setItem(STORAGE_KEYS.lastBackup, d); },
+            exportAll() {
+                return {
+                    version: '8.2',
+                    exportedAt: new Date().toISOString(),
+                    materials: this.getMaterials(),
+                    pickups: this.getPickups(),
+                    storages: this.getStorages(),
+                    projects: this.getProjects(),
+                    persons: this.getPersons(),
+                };
+            },
+            importAll(data) {
+                if (!data || typeof data !== 'object') throw new Error('无效数据格式');
+                if (!Array.isArray(data.materials) || !Array.isArray(data.pickups) || !Array.isArray(data.storages) ||
+                    !Array.isArray(data.projects) || !Array.isArray(data.persons)) throw new Error('数据不完整');
+                this.saveMaterials(data.materials);
+                this.savePickups(data.pickups);
+                this.saveStorages(data.storages);
+                this.saveProjects(data.projects);
+                this.savePersons(data.persons);
+                this.setLastBackup(data.exportedAt || new Date().toISOString());
+            },
+            resetToDefault() {
+                this.saveMaterials(DEFAULT_MATERIALS.slice());
+                this.savePickups([]);
+                this.saveStorages([]);
+                this.saveProjects([]);
+                this.savePersons([]);
+                this.setLastBackup(null);
+            },
+            clearRecords() { this.savePickups([]);
+                this.saveStorages([]); },
+            fixMaterialThickness() {
+                const mats = this.getMaterials();
+                let changed = false;
+                mats.forEach(m => {
+                    if (m.type === 'plate' && (m.thickness === undefined || m.thickness === null || m.thickness <=
+                            0)) {
+                        const extracted = extractNumberFromSpec(m.spec);
+                        if (extracted !== null && extracted > 0) {
+                            m.thickness = extracted;
+                            changed = true;
+                        }
+                    }
+                });
+                if (changed) { this.saveMaterials(mats);
+                    console.log('🔧 已修复部分板材的厚度'); }
+            },
+            fixInitialStorageDate() {
+                const storages = this.getStorages();
+                let changed = false;
+                storages.forEach(s => {
+                    if (s.remark === '6月期初' && s.date === '2026-06-26') {
+                        s.date = '2026-05-31';
+                        changed = true;
+                    }
+                });
+                if (changed) {
+                    this.saveStorages(storages);
+                    console.log('✅ 已将6月期初入库日期从2026-06-26修正为2026-05-31');
+                }
+            },
+            initDefaultStorages() {
+                const existing = this.getStorages();
+                if (existing.length === 0) {
+                    const mats = this.getMaterials();
+                    const mat1 = mats.find(m => m.code === '15.01.01.003');
+                    const mat2 = mats.find(m => m.code === '15.01.02.001');
+                    const defaultStorages = [];
+                    if (mat1) {
+                        const len = 2000,
+                            wid = 1500,
+                            qty = 10;
+                        const area = (len * wid) / 1000000;
+                        const unitWeight = mat1.thickness * mat1.density;
+                        const weight = area * unitWeight * qty;
+                        defaultStorages.push({
+                            date: '2026-05-31',
+                            materialName: mat1.name,
+                            spec: mat1.spec,
+                            qty: qty,
+                            len: len,
+                            wid: wid,
+                            singleArea: area,
+                            weight: weight,
+                            unitWeight: unitWeight,
+                            remark: '6月期初',
+                            matCode: mat1.code,
+                            type: 'plate',
+                            thickness: mat1.thickness
+                        });
+                    }
+                    if (mat2) {
+                        const len = 6000,
+                            wid = 1000,
+                            qty = 5;
+                        const lenM = len / 1000;
+                        const area = lenM;
+                        const unitWeight = mat2.perMeterWeight;
+                        const weight = area * unitWeight * qty;
+                        defaultStorages.push({
+                            date: '2026-05-31',
+                            materialName: mat2.name,
+                            spec: mat2.spec,
+                            qty: qty,
+                            len: len,
+                            wid: wid,
+                            singleArea: area,
+                            weight: weight,
+                            unitWeight: unitWeight,
+                            remark: '6月期初',
+                            matCode: mat2.code,
+                            type: 'profile',
+                            thickness: '-'
+                        });
+                    }
+                    if (defaultStorages.length > 0) {
+                        this.saveStorages(defaultStorages);
+                        console.log('✅ 已创建默认“6月期初”入库记录');
+                    }
+                }
+            }
+        };
+
+        // ================================================================
+        // 工具函数
+        // ================================================================
+        function fmtNum(v, d = 2) { return Number(v).toFixed(d); }
+
+        function parseNum(v) { const n = parseFloat(v); return isNaN(n) ? 0 : n; }
+
+        function getToday() {
+            const d = new Date();
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2,
+                '0');
+        }
+
+        function getNowStr() {
+            const d = new Date();
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2,
+                    '0') +
+                ' ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+        }
+
+        function formatDateISO(iso) {
+            if (!iso) return '未备份';
+            try { return new Date(iso).toLocaleString('zh-CN', { hour12: false }); } catch (e) { return iso; }
+        }
+
+        function exportToExcel(data, filename, headers, columnKeys) {
+            let csv = '\uFEFF' + headers.join(',') + '\n';
+            data.forEach(row => {
+                csv += columnKeys.map(k => {
+                    let v = row[k] !== undefined ? row[k] : '';
+                    if (typeof v === 'string' && v.includes(',')) v = '"' + v + '"';
+                    return v;
+                }).join(',') + '\n';
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename + '.csv';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
+        }
+
+        function extractNumberFromSpec(spec) {
+            if (!spec) return null;
+            const match = spec.match(/(\d+\.?\d*)/);
+            if (match) { return parseFloat(match[1]); }
+            return null;
+        }
+
+        // ================================================================
+        // 领料模块
+        // ================================================================
+        const pickup = {
+            matSelect: document.getElementById('pickupMaterialSelect'),
+            specDisplay: document.getElementById('pickupSpecDisplay'),
+            thickness: document.getElementById('pickupThickness'),
+            thicknessUnit: document.getElementById('pickupThicknessUnit'),
+            weightLabel: document.getElementById('pickupWeightLabel'),
+            weightPerUnit: document.getElementById('pickupWeightPerUnit'),
+            weightUnit: document.getElementById('pickupWeightUnit'),
+            date: document.getElementById('pickupDate'),
+            nameInput: document.getElementById('pickupNameInput'),
+            specInput: document.getElementById('pickupSpecInput'),
+            projectSelect: document.getElementById('pickupProject'),
+            personSelect: document.getElementById('pickupPerson'),
+            qty: document.getElementById('pickupQty'),
+            realLen: document.getElementById('pickupRealLen'),
+            realWid: document.getElementById('pickupRealWid'),
+            retLen: document.getElementById('pickupRetLen'),
+            retWid: document.getElementById('pickupRetWid'),
+            widthLabel: document.getElementById('pickupWidthLabel'),
+            retWidLabel: document.getElementById('pickupRetWidLabel'),
+            hint: document.getElementById('pickupHint'),
+            addBtn: document.getElementById('pickupAddBtn'),
+            clearBtn: document.getElementById('pickupClearBtn'),
+            printBtn: document.getElementById('pickupPrintBtn'),
+            excelBtn: document.getElementById('pickupExcelBtn'),
+            tbody: document.getElementById('pickupTableBody'),
+            totalSpan: document.getElementById('pickupTotalWeight'),
+            totalQtySpan: document.getElementById('pickupTotalQty'),
+            countBadge: document.getElementById('pickupCount'),
+            stockSize: document.getElementById('pickupStockSize'),
+            collapseBadge: document.getElementById('pickupCollapseBadge'),
+        };
+
+        function getPickupMaterial() {
+            const idx = parseInt(pickup.matSelect.value, 10);
+            const mats = DataStore.getMaterials();
+            return mats[idx] || null;
+        }
+
+        function updatePickupStockSizes() {
+            const mat = getPickupMaterial(),
+                sel = pickup.stockSize;
+            sel.innerHTML = '<option value="">-- 选择库存 --</option>';
+            if (!mat || mat.type !== 'plate') { sel.disabled = true; return; }
+            sel.disabled = false;
+            const all = [];
+            DataStore.getStorages().forEach(r => {
+                if (r.matCode === mat.code && r.type === 'plate') {
+                    all.push({ type: 'storage', len: r.len, wid: r.wid, weight: r.weight });
+                }
+            });
+            DataStore.getPickups().forEach(r => {
+                if (r.matCode === mat.code && r.type === 'plate') {
+                    all.push({ type: 'pickup', len: r.realL, wid: r.realW, weight: r.weight });
+                }
+                if (r.matCode === mat.code && r.type === 'plate' && r.retL > 0 && r.retW > 0 && r.returnWeight > 0) {
+                    all.push({ type: 'return', len: r.retL, wid: r.retW, weight: r.returnWeight });
+                }
+            });
+            const map = new Map();
+            all.forEach(item => {
+                const key = item.len + '|' + item.wid;
+                if (!map.has(key)) map.set(key, { len: item.len, wid: item.wid, balance: 0 });
+                const e = map.get(key);
+                if (item.type === 'storage' || item.type === 'return') e.balance += item.weight;
+                else if (item.type === 'pickup') e.balance -= item.weight;
+            });
+            const options = [];
+            map.forEach((v) => { if (v.balance > 0.001) options.push(v); });
+            if (!options.length) { sel.innerHTML = '<option value="">-- 无库存 --</option>'; return; }
+            options.sort((a, b) => a.len - b.len || a.wid - b.wid);
+            options.forEach(o => {
+                const opt = document.createElement('option');
+                opt.value = o.len + '|' + o.wid;
+                opt.textContent = o.len + '×' + o.wid + ' (结余' + fmtNum(o.balance, 1) + 'KG)';
+                sel.appendChild(opt);
+            });
+            if (options[0]) {
+                sel.value = options[0].len + '|' + options[0].wid;
+                pickup.realLen.value = options[0].len;
+                pickup.realWid.value = options[0].wid;
+            }
+        }
+
+        function updatePickupParams() {
+            const mat = getPickupMaterial();
+            if (!mat) return;
+            pickup.specDisplay.textContent = mat.spec ? '[' + mat.spec + ']' : '';
+            pickup.nameInput.value = mat.name || '';
+            pickup.specInput.value = mat.spec || '';
+            if (mat.type === 'plate') {
+                pickup.thickness.disabled = false;
+                pickup.thicknessUnit.textContent = '(板材用)';
+                let thickVal = mat.thickness;
+                if (thickVal === undefined || thickVal === null || thickVal <= 0) {
+                    const extracted = extractNumberFromSpec(mat.spec);
+                    if (extracted !== null && extracted > 0) thickVal = extracted;
+                }
+                pickup.thickness.value = (thickVal !== undefined && thickVal !== null && thickVal > 0) ? thickVal : '';
+                pickup.weightLabel.textContent = '每㎡重量';
+                pickup.weightUnit.textContent = 'KG';
+                pickup.hint.textContent = '⚡ 板材：长×宽算面积 | 退库将自动生成入库单（备注：生产退库）';
+                pickup.widthLabel.textContent = '领料宽度 (mm)';
+                pickup.retWidLabel.textContent = '退库宽度 (mm)';
+                pickup.realWid.disabled = false;
+                pickup.retWid.disabled = false;
+                if (pickup.realWid.value === '1000' && !pickup.realWid.dataset.userChanged) pickup.realWid.value = '';
+                if (pickup.retWid.value === '1000' && !pickup.retWid.dataset.userChanged) pickup.retWid.value = '0';
+                pickup.stockSize.style.display = 'inline-block';
+                document.getElementById('pickupStockGroup').style.display = 'flex';
+                updatePickupStockSizes();
+            } else {
+                pickup.thickness.disabled = true;
+                pickup.thicknessUnit.textContent = '(型材禁用)';
+                pickup.thickness.value = '';
+                pickup.weightLabel.textContent = '每米重量';
+                pickup.weightUnit.textContent = 'KG';
+                pickup.hint.textContent = '⚡ 型材：宽度自动1000mm，长度按米计 | 退库将自动生成入库单（备注：生产退库）';
+                pickup.widthLabel.textContent = '领料宽度 (mm)';
+                pickup.retWidLabel.textContent = '退库宽度 (mm)';
+                pickup.realWid.value = '1000';
+                pickup.realWid.disabled = true;
+                pickup.retWid.value = '1000';
+                pickup.retWid.disabled = true;
+                pickup.realWid.dataset.userChanged = 'false';
+                pickup.retWid.dataset.userChanged = 'false';
+                pickup.stockSize.style.display = 'none';
+                document.getElementById('pickupStockGroup').style.display = 'none';
+            }
+            const thick = parseNum(pickup.thickness.value);
+            pickup.weightPerUnit.textContent = fmtNum(mat.type === 'plate' ? thick * mat.density : (mat.perMeterWeight ||
+                0), 2);
+            renderPickupTable();
+        }
+
+        function renderPickupTable() {
+            const rows = DataStore.getPickups(),
+                dateVal = pickup.date.value || getToday();
+            const count = rows.length;
+            pickup.collapseBadge.textContent = count;
+            pickup.collapseBadge.className = 'badge-count' + (count === 0 ? ' zero' : '');
+            if (!rows.length) {
+                pickup.tbody.innerHTML = '<tr class="empty-row"><td colspan="15">暂无领料明细</td></tr>';
+                pickup.totalSpan.textContent = '0.00';
+                pickup.totalQtySpan.textContent = '0';
+                pickup.countBadge.textContent = '0';
+                return;
+            }
+            let html = '',
+                total = 0,
+                totalQty = 0;
+            const isAdmin = Auth.isAdmin();
+            rows.forEach((r, i) => {
+                total += r.weight || 0;
+                totalQty += r.qty || 1;
+                let grossWeight = 0;
+                if (r.type === 'plate') {
+                    const area = (r.realL * r.realW) / 1000000;
+                    grossWeight = area * r.unitWeight * r.qty;
+                } else {
+                    const lenM = r.realL / 1000;
+                    grossWeight = lenM * r.unitWeight * r.qty;
+                }
+                html += `<tr><td>${r.date||dateVal}</td><td>${r.project||''}</td><td>${r.person||''}</td>
+                    <td>${r.materialName||''}</td><td class="col-spec">${r.spec||''}</td>
+                    <td class="col-qty">${r.qty||1}</td><td>${r.realL||0}</td><td>${r.realW||0}</td>
+                    <td>${r.retL||0}</td><td>${r.retW||0}</td>
+                    <td>${fmtNum(r.singleArea||0,3)}</td>
+                    <td>${fmtNum(grossWeight,2)}</td>
+                    <td>${fmtNum(r.weight||0,2)}</td>
+                    <td>${fmtNum(r.returnWeight||0,2)}</td>
+                    <td class="no-print">${isAdmin ? `<button class="btn btn-danger btn-sm" data-idx="${i}" data-type="pickup" data-id="${r.id||''}">删除</button>` : '—'}</td></tr>`;
+            });
+            pickup.tbody.innerHTML = html;
+            pickup.totalSpan.textContent = fmtNum(total, 2);
+            pickup.totalQtySpan.textContent = totalQty;
+            pickup.countBadge.textContent = rows.length;
+            if (isAdmin) {
+                pickup.tbody.querySelectorAll('button[data-type="pickup"]').forEach(b => b.addEventListener('click',
+                    function() {
+                        const i = parseInt(this.dataset.idx);
+                        const id = this.dataset.id;
+                        if (!confirm('确定删除此领料记录吗？同时将自动删除对应的退库入库记录（如有）。')) return;
+                        const list = DataStore.getPickups();
+                        const removed = list.splice(i, 1)[0];
+                        DataStore.savePickups(list);
+                        if (removed && removed.id && removed.retL > 0 && removed.retW > 0) {
+                            const storages = DataStore.getStorages();
+                            const filtered = storages.filter(s => s.sourceId !== removed.id);
+                            if (filtered.length !== storages.length) {
+                                DataStore.saveStorages(filtered);
+                                console.log('已删除关联的退库入库记录');
+                            }
+                        }
+                        renderPickupTable();
+                        renderStorageTable();
+                        updateAllCounts();
+                        updatePickupStockSizes();
+                        if (document.getElementById('page-finance').classList.contains('active')) renderFinance();
+                        if (document.getElementById('page-inventory').classList.contains('active')) renderInventory();
+                    }));
+            }
+        }
+
+        function addPickup() {
+            const mat = getPickupMaterial();
+            if (!mat) { alert('请选择有效物料'); return; }
+            const name = pickup.nameInput.value.trim() || mat.name;
+            const spec = pickup.specInput.value.trim() || mat.spec || '';
+            const project = pickup.projectSelect.value || '';
+            const person = pickup.personSelect.value || '';
+            const qty = parseInt(pickup.qty.value) || 1;
+            const realL = parseNum(pickup.realLen.value);
+            const realW = parseNum(pickup.realWid.value);
+            const retL = parseNum(pickup.retLen.value);
+            const retW = parseNum(pickup.retWid.value);
+            const date = pickup.date.value || getToday();
+            const thick = parseNum(pickup.thickness.value);
+            if (qty < 1) { alert('数量至少为1！'); return; }
+            if (realL <= 0 || realW <= 0) { alert('领料长度和宽度必须为正数！'); return; }
+            if (retL < 0 || retW < 0) { alert('退库尺寸不能为负数！'); return; }
+            if (mat.type === 'profile' && (realW !== 1000 || retW !== 1000)) { alert('型材宽度固定为1000mm'); return; }
+            let singleArea, weight, unitWeight, returnWeight = 0;
+            if (mat.type === 'plate') {
+                const realArea = (realL * realW) / 1000000,
+                    retArea = (retL * retW) / 1000000;
+                singleArea = realArea - retArea;
+                unitWeight = thick * mat.density;
+                weight = singleArea * unitWeight * qty;
+                returnWeight = retArea * unitWeight * qty;
+            } else {
+                const realLenM = realL / 1000,
+                    retLenM = retL / 1000;
+                singleArea = realLenM - retLenM;
+                unitWeight = mat.perMeterWeight;
+                weight = singleArea * unitWeight * qty;
+                returnWeight = retLenM * unitWeight * qty;
+            }
+            if (singleArea < 0) { alert('耗用面积为负，退库不能大于领料'); return; }
+
+            const id = Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+
+            const list = DataStore.getPickups();
+            const newPickup = { id, date, materialName: name, spec, project, person, qty, realL, realW, retL, retW,
+                singleArea,
+                weight, returnWeight, unitWeight, matCode: mat.code, type: mat.type, thickness: thick };
+            list.push(newPickup);
+            DataStore.savePickups(list);
+
+            if (retL > 0 && retW > 0 && returnWeight > 0) {
+                let inSingleArea, inWeight;
+                if (mat.type === 'plate') {
+                    const retArea = (retL * retW) / 1000000;
+                    inSingleArea = retArea;
+                    inWeight = retArea * unitWeight * qty;
+                } else {
+                    const retLenM = retL / 1000;
+                    inSingleArea = retLenM;
+                    inWeight = retLenM * unitWeight * qty;
+                }
+                const storageRecord = {
+                    date: date,
+                    materialName: name,
+                    spec: spec,
+                    qty: qty,
+                    len: retL,
+                    wid: retW,
+                    singleArea: inSingleArea,
+                    weight: inWeight,
+                    unitWeight: unitWeight,
+                    remark: '生产退库',
+                    matCode: mat.code,
+                    type: mat.type,
+                    thickness: mat.type === 'plate' ? thick : '-',
+                    sourceId: id
+                };
+                const storages = DataStore.getStorages();
+                storages.push(storageRecord);
+                DataStore.saveStorages(storages);
+                console.log('已自动生成退库入库单');
+            }
+
+            renderPickupTable();
+            renderStorageTable();
+            updateAllCounts();
+            pickup.realLen.value = '';
+            pickup.retLen.value = '0';
+            if (mat.type === 'plate') {
+                pickup.realWid.value = '';
+                pickup.retWid.value = '0';
+                pickup.realWid.dataset.userChanged = 'false';
+                pickup.retWid.dataset.userChanged = 'false';
+                updatePickupStockSizes();
+            } else {
+                pickup.realWid.value = '1000';
+                pickup.retWid.value = '1000';
+            }
+            pickup.qty.value = '1';
+            pickup.realLen.focus();
+            if (document.getElementById('page-finance').classList.contains('active')) renderFinance();
+            if (document.getElementById('page-inventory').classList.contains('active')) renderInventory();
+        }
+
+        function clearPickups() {
+            if (!Auth.isAdmin()) return;
+            if (!DataStore.getPickups().length) return;
+            if (confirm('确定清空全部领料明细吗？同时将删除所有关联的退库入库记录。')) {
+                const pickups = DataStore.getPickups();
+                const ids = pickups.map(p => p.id).filter(id => id);
+                DataStore.savePickups([]);
+                if (ids.length) {
+                    const storages = DataStore.getStorages();
+                    const filtered = storages.filter(s => !s.sourceId || !ids.includes(s.sourceId));
+                    DataStore.saveStorages(filtered);
+                }
+                renderPickupTable();
+                renderStorageTable();
+                updateAllCounts();
+                updatePickupStockSizes();
+                if (document.getElementById('page-finance').classList.contains('active')) renderFinance();
+                if (document.getElementById('page-inventory').classList.contains('active')) renderInventory();
+            }
+        }
+
+        function printPickup() { window.print(); }
+
+        function exportPickupExcel() {
+            const rows = DataStore.getPickups();
+            if (!rows.length) { alert('暂无领料数据'); return; }
+            const data = rows.map(r => {
+                let grossWeight = 0;
+                if (r.type === 'plate') {
+                    const area = (r.realL * r.realW) / 1000000;
+                    grossWeight = area * r.unitWeight * r.qty;
+                } else {
+                    const lenM = r.realL / 1000;
+                    grossWeight = lenM * r.unitWeight * r.qty;
+                }
+                return { ...r, grossWeight: fmtNum(grossWeight, 2), singleArea: fmtNum(r.singleArea || 0, 3),
+                    weight: fmtNum(r.weight || 0, 2), returnWeight: fmtNum(r.returnWeight || 0, 2) };
+            });
+            exportToExcel(data, '领料明细_' + getToday(), ['领料日期', '项目', '领料人', '物料名称', '规格', '数量', '领料长(mm)',
+                '领料宽(mm)', '退库长(mm)', '退库宽(mm)', '项目用料面积(㎡)', '领料重量(KG)', '项目用料重量(KG)', '产线退库重量(KG)'
+            ], ['date', 'project', 'person', 'materialName', 'spec', 'qty', 'realL', 'realW', 'retL', 'retW',
+                'singleArea', 'grossWeight', 'weight', 'returnWeight'
+            ]);
+        }
+
+        // ================================================================
+        // 入库模块
+        // ================================================================
+        const storage = {
+            matSelect: document.getElementById('storageMaterialSelect'),
+            specDisplay: document.getElementById('storageSpecDisplay'),
+            thickness: document.getElementById('storageThickness'),
+            thicknessUnit: document.getElementById('storageThicknessUnit'),
+            weightLabel: document.getElementById('storageWeightLabel'),
+            weightPerUnit: document.getElementById('storageWeightPerUnit'),
+            weightUnit: document.getElementById('storageWeightUnit'),
+            date: document.getElementById('storageDate'),
+            nameInput: document.getElementById('storageNameInput'),
+            specInput: document.getElementById('storageSpecInput'),
+            qty: document.getElementById('storageQty'),
+            len: document.getElementById('storageLen'),
+            wid: document.getElementById('storageWid'),
+            remark: document.getElementById('storageRemark'),
+            remarkFilter: document.getElementById('storageRemarkFilter'),
+            widthLabel: document.getElementById('storageWidthLabel'),
+            widthGroup: document.getElementById('storageWidthGroup'),
+            hint: document.getElementById('storageHint'),
+            addBtn: document.getElementById('storageAddBtn'),
+            clearBtn: document.getElementById('storageClearBtn'),
+            printBtn: document.getElementById('storagePrintBtn'),
+            excelBtn: document.getElementById('storageExcelBtn'),
+            tbody: document.getElementById('storageTableBody'),
+            totalSpan: document.getElementById('storageTotalWeight'),
+            totalQtySpan: document.getElementById('storageTotalQty'),
+            countBadge: document.getElementById('storageCount'),
+            collapseBadge: document.getElementById('storageCollapseBadge'),
+        };
+
+        function getStorageMaterial() {
+            const idx = parseInt(storage.matSelect.value, 10);
+            const mats = DataStore.getMaterials();
+            return mats[idx] || null;
+        }
+
+        function updateStorageParams() {
+            const mat = getStorageMaterial();
+            if (!mat) return;
+            storage.specDisplay.textContent = mat.spec ? '[' + mat.spec + ']' : '';
+            storage.nameInput.value = mat.name || '';
+            storage.specInput.value = mat.spec || '';
+            if (mat.type === 'plate') {
+                storage.thickness.disabled = false;
+                storage.thicknessUnit.textContent = '(板材用)';
+                let thickVal = mat.thickness;
+                if (thickVal === undefined || thickVal === null || thickVal <= 0) {
+                    const extracted = extractNumberFromSpec(mat.spec);
+                    if (extracted !== null && extracted > 0) thickVal = extracted;
+                }
+                storage.thickness.value = (thickVal !== undefined && thickVal !== null && thickVal > 0) ? thickVal : '';
+                storage.weightLabel.textContent = '每㎡重量';
+                storage.weightUnit.textContent = 'KG';
+                storage.hint.textContent = '⚡ 板材：长×宽算面积，重量=单件面积×每㎡重量×数量';
+                storage.widthLabel.textContent = '宽度 (mm)';
+                storage.widthGroup.style.display = 'flex';
+                storage.wid.disabled = false;
+                if (storage.wid.value === '1000' && !storage.wid.dataset.userChanged) storage.wid.value = '';
+            } else {
+                storage.thickness.disabled = true;
+                storage.thicknessUnit.textContent = '(型材禁用)';
+                storage.thickness.value = '';
+                storage.weightLabel.textContent = '每米重量';
+                storage.weightUnit.textContent = 'KG';
+                storage.hint.textContent = '⚡ 型材：宽度可空（按1米计算），长度按米计';
+                storage.widthLabel.textContent = '宽度 (mm) 可空';
+                storage.widthGroup.style.display = 'flex';
+                storage.wid.disabled = false;
+                storage.wid.placeholder = '空则按1米';
+                storage.wid.value = '';
+                storage.wid.dataset.userChanged = 'false';
+            }
+            const thick = parseNum(storage.thickness.value);
+            storage.weightPerUnit.textContent = fmtNum(mat.type === 'plate' ? thick * mat.density : (mat.perMeterWeight ||
+                0), 2);
+            renderStorageTable();
+        }
+
+        function renderStorageTable() {
+            let rows = DataStore.getStorages();
+            const filterVal = storage.remarkFilter.value.trim().toLowerCase();
+            if (filterVal) {
+                rows = rows.filter(r => (r.remark || '').toLowerCase().includes(filterVal));
+            }
+            const dateVal = storage.date.value || getToday(),
+                mats = DataStore.getMaterials();
+            const count = rows.length;
+            storage.collapseBadge.textContent = count;
+            storage.collapseBadge.className = 'badge-count' + (count === 0 ? ' zero' : '');
+            if (!rows.length) {
+                storage.tbody.innerHTML = '<tr class="empty-row"><td colspan="12">暂无入库明细</td></tr>';
+                storage.totalSpan.textContent = '0.00';
+                storage.totalQtySpan.textContent = '0';
+                storage.countBadge.textContent = '0';
+                return;
+            }
+            let html = '',
+                total = 0,
+                totalQty = 0;
+            const isAdmin = Auth.isAdmin();
+            rows.forEach((r, i) => {
+                total += r.weight || 0;
+                totalQty += r.qty || 1;
+                let thick = r.thickness !== undefined && r.thickness !== '' ? r.thickness : '';
+                let unitW = r.unitWeight !== undefined && r.unitWeight !== '' ? r.unitWeight : '';
+                if (thick === '' || unitW === '') {
+                    const mat = mats.find(m => m.code === r.matCode);
+                    if (mat) {
+                        if (mat.type === 'plate') {
+                            thick = mat.thickness !== undefined ? mat.thickness : '';
+                            unitW = mat.density * (thick || 0);
+                        } else {
+                            thick = '-';
+                            unitW = mat.perMeterWeight || 0;
+                        }
+                    }
+                }
+                let remarkDisplay = r.remark || '';
+                if (r.sourceId) remarkDisplay += ' (退库)';
+                html += `<tr>
+                    <td>${r.date||dateVal}</td>
+                    <td>${r.materialName||''}</td>
+                    <td class="col-spec">${r.spec||''}</td>
+                    <td>${thick}</td>
+                    <td>${fmtNum(unitW, 2)}</td>
+                    <td class="col-qty">${r.qty||1}</td>
+                    <td>${r.len||0}</td>
+                    <td>${r.wid||''}</td>
+                    <td>${fmtNum(r.singleArea||0,3)}</td>
+                    <td>${fmtNum(r.weight||0,2)}</td>
+                    <td>${remarkDisplay}</td>
+                    <td class="no-print">${isAdmin ? `<button class="btn btn-danger btn-sm" data-idx="${i}" data-type="storage">删除</button>` : '—'}</td>
+                </tr>`;
+            });
+            storage.tbody.innerHTML = html;
+            storage.totalSpan.textContent = fmtNum(total, 2);
+            storage.totalQtySpan.textContent = totalQty;
+            storage.countBadge.textContent = rows.length;
+            if (isAdmin) {
+                storage.tbody.querySelectorAll('button[data-type="storage"]').forEach(b => b.addEventListener('click',
+                    function() {
+                        const i = parseInt(this.dataset.idx),
+                            l = DataStore.getStorages();
+                        l.splice(i, 1);
+                        DataStore.saveStorages(l);
+                        renderStorageTable();
+                        updateAllCounts();
+                        updatePickupStockSizes();
+                        if (document.getElementById('page-inventory').classList.contains('active')) renderInventory();
+                    }));
+            }
+        }
+
+        function addStorage() {
+            const mat = getStorageMaterial();
+            if (!mat) { alert('请选择有效物料'); return; }
+            const name = storage.nameInput.value.trim() || mat.name;
+            const spec = storage.specInput.value.trim() || mat.spec || '';
+            const qty = parseInt(storage.qty.value) || 1;
+            const len = parseNum(storage.len.value);
+            let wid = parseNum(storage.wid.value);
+            const date = storage.date.value || getToday();
+            const remark = storage.remark.value.trim() || '';
+            const thick = parseNum(storage.thickness.value);
+            if (qty < 1) { alert('数量至少为1！'); return; }
+            if (len <= 0) { alert('长度必须为正数！'); return; }
+            if (mat.type === 'profile' && (isNaN(wid) || wid <= 0)) wid = 1000;
+            if (wid <= 0) { alert('宽度必须为正数！'); return; }
+            let singleArea, weight, unitWeight;
+            if (mat.type === 'plate') {
+                singleArea = (len * wid) / 1000000;
+                unitWeight = thick * mat.density;
+                weight = singleArea * unitWeight * qty;
+            } else {
+                const lenM = len / 1000;
+                singleArea = lenM;
+                unitWeight = mat.perMeterWeight;
+                weight = singleArea * unitWeight * qty;
+            }
+            const list = DataStore.getStorages();
+            list.push({
+                date,
+                materialName: name,
+                spec,
+                qty,
+                len,
+                wid,
+                singleArea,
+                weight,
+                unitWeight,
+                remark,
+                matCode: mat.code,
+                type: mat.type,
+                thickness: mat.type === 'plate' ? thick : '-'
+            });
+            DataStore.saveStorages(list);
+            renderStorageTable();
+            updateAllCounts();
+            updatePickupStockSizes();
+            storage.len.value = '';
+            storage.remark.value = '';
+            storage.wid.value = '';
+            storage.wid.dataset.userChanged = 'false';
+            storage.qty.value = '1';
+            storage.len.focus();
+            if (document.getElementById('page-inventory').classList.contains('active')) renderInventory();
+        }
+
+        function clearStorages() {
+            if (!Auth.isAdmin()) return;
+            if (!DataStore.getStorages().length) return;
+            if (confirm('确定清空全部入库明细吗？注意：这将同时删除所有手工入库记录，但不影响自动生成的退库入库（可通过领料单删除联动）。')) {
+                const storages = DataStore.getStorages();
+                const kept = storages.filter(s => s.sourceId);
+                DataStore.saveStorages(kept);
+                renderStorageTable();
+                updateAllCounts();
+                updatePickupStockSizes();
+                if (document.getElementById('page-finance').classList.contains('active')) renderFinance();
+                if (document.getElementById('page-inventory').classList.contains('active')) renderInventory();
+            }
+        }
+
+        function printStorage() { window.print(); }
+
+        function exportStorageExcel() {
+            let rows = DataStore.getStorages();
+            const filterVal = storage.remarkFilter.value.trim().toLowerCase();
+            if (filterVal) {
+                rows = rows.filter(r => (r.remark || '').toLowerCase().includes(filterVal));
+            }
+            if (!rows.length) { alert('当前筛选条件下没有数据可导出'); return; }
+            const mats = DataStore.getMaterials();
+            const data = rows.map(r => {
+                let thick = r.thickness !== undefined && r.thickness !== '' ? r.thickness : '';
+                let unitW = r.unitWeight !== undefined && r.unitWeight !== '' ? r.unitWeight : '';
+                if (thick === '' || unitW === '') {
+                    const mat = mats.find(m => m.code === r.matCode);
+                    if (mat) {
+                        if (mat.type === 'plate') {
+                            thick = mat.thickness !== undefined ? mat.thickness : '';
+                            unitW = mat.density * (thick || 0);
+                        } else {
+                            thick = '-';
+                            unitW = mat.perMeterWeight || 0;
+                        }
+                    }
+                }
+                let remarkDisplay = r.remark || '';
+                if (r.sourceId) remarkDisplay += ' (退库)';
+                return { ...r, thickness: thick, unitWeight: fmtNum(unitW, 2), singleArea: fmtNum(r.singleArea || 0,
+                        3), weight: fmtNum(r.weight || 0, 2), remarkDisplay: remarkDisplay };
+            });
+            exportToExcel(data, '入库明细_' + getToday(),
+                ['入库日期', '物料名称', '规格', '厚度(mm)', '单位重量(KG)', '数量', '长度(mm)', '宽度(mm)', '单件面积(㎡)', '总重量(KG)',
+                    '备注'
+                ],
+                ['date', 'materialName', 'spec', 'thickness', 'unitWeight', 'qty', 'len', 'wid', 'singleArea',
+                    'weight', 'remarkDisplay'
+                ]
+            );
+        }
+
+        // ================================================================
+        // 详情模块
+        // ================================================================
+        const detail = {
+            fromDate: document.getElementById('detailFromDate'),
+            toDate: document.getElementById('detailToDate'),
+            projectFilter: document.getElementById('detailProjectFilter'),
+            personFilter: document.getElementById('detailPersonFilter'),
+            typeFilter: document.getElementById('detailTypeFilter'),
+            refreshBtn: document.getElementById('detailRefreshBtn'),
+            excelBtn: document.getElementById('detailExcelBtn'),
+            printBtn: document.getElementById('detailPrintBtn'),
+            tbody: document.getElementById('detailTableBody'),
+            totalPickup: document.getElementById('detailTotalPickup'),
+            totalStorage: document.getElementById('detailTotalStorage'),
+            totalRows: document.getElementById('detailTotalRows'),
+            dateRange: document.getElementById('detailDateRange'),
+            collapseBadge: document.getElementById('detailCollapseBadge'),
+        };
+
+        function renderDetail() {
+            const pickups = DataStore.getPickups(),
+                storages = DataStore.getStorages();
+            const from = detail.fromDate.value,
+                to = detail.toDate.value,
+                proj = detail.projectFilter.value,
+                person = detail.personFilter.value,
+                type = detail.typeFilter.value;
+            let all = [];
+            pickups.forEach(r => {
+                if (from && r.date < from) return;
+                if (to && r.date > to) return;
+                if (proj !== '__ALL__' && r.project !== proj) return;
+                if (person !== '__ALL__' && r.person !== person) return;
+                if (type !== '__ALL__' && type !== 'pickup') return;
+                all.push({ ...r, _type: '领料', _typeClass: 'type-pickup', len: r.realL || 0, wid: r.realW || 0,
+                    area: r.singleArea || 0, weight: r.weight || 0, remark: '' });
+            });
+            storages.forEach(r => {
+                if (from && r.date < from) return;
+                if (to && r.date > to) return;
+                if (proj !== '__ALL__') return;
+                if (person !== '__ALL__') return;
+                if (type !== '__ALL__' && type !== 'storage') return;
+                all.push({ ...r, _type: '入库', _typeClass: 'type-storage', project: '', person: '', len: r
+                        .len || 0, wid: r.wid || 0, area: r.singleArea || 0, weight: r.weight || 0 });
+            });
+            all.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+            let totalPickup = 0,
+                totalStorage = 0;
+            all.forEach(r => { if (r._type === '领料') totalPickup += r.weight;
+                else totalStorage += r.weight; });
+            detail.totalPickup.textContent = fmtNum(totalPickup, 2);
+            detail.totalStorage.textContent = fmtNum(totalStorage, 2);
+            detail.totalRows.textContent = all.length;
+            detail.dateRange.textContent = (from && to) ? from + ' 至 ' + to : (from ? '从 ' + from + ' 起' : (to ? '至 ' +
+                to + ' 止' : '全部'));
+            detail.collapseBadge.textContent = all.length;
+            detail.collapseBadge.className = 'badge-count' + (all.length === 0 ? ' zero' : '');
+            if (!all.length) { detail.tbody.innerHTML = '<tr class="empty-row"><td colspan="13">暂无记录</td></tr>'; return; }
+            let html = '';
+            const isAdmin = Auth.isAdmin();
+            all.forEach((r, i) => {
+                html += `<tr><td>${r.date||''}</td><td class="${r._typeClass}">${r._type}</td><td>${r.project||''}</td><td>${r.person||''}</td>
+                    <td>${r.materialName||''}</td><td class="col-spec">${r.spec||''}</td><td class="col-qty">${r.qty||1}</td>
+                    <td>${r.len||0}</td><td>${r.wid||''}</td><td>${fmtNum(r.area||0,3)}</td><td>${fmtNum(r.weight||0,2)}</td>
+                    <td>${r.remark||''}</td><td class="no-print">${isAdmin ? `<button class="btn btn-danger btn-sm" data-idx="${i}" data-type="detail">删除</button>` : '—'}</td></tr>`;
+            });
+            detail.tbody.innerHTML = html;
+            if (isAdmin) {
+                detail.tbody.querySelectorAll('button[data-type="detail"]').forEach(b => b.addEventListener('click',
+                    function() {
+                        const i = parseInt(this.dataset.idx);
+                        const item = all[i];
+                        if (!item) return;
+                        if (!confirm('确定删除此条' + item._type + '记录吗？')) return;
+                        if (item._type === '领料') {
+                            const list = DataStore.getPickups();
+                            const idx = list.findIndex(r => r.date === item.date && r.materialName === item
+                                .materialName && r.spec === item.spec && r.qty === item.qty && r
+                                .realL === item.realL && r.realW === item.realW && r.retL === item
+                                .retL && r.retW === item.retW && r.project === item.project && r
+                                .person === item.person);
+                            if (idx !== -1) { list.splice(idx, 1);
+                                DataStore.savePickups(list); } else { alert('未找到对应记录'); return; }
+                        } else {
+                            const list = DataStore.getStorages();
+                            const idx = list.findIndex(r => r.date === item.date && r.materialName === item
+                                .materialName && r.spec === item.spec && r.qty === item.qty && r
+                                .len === item.len && r.wid === item.wid && r.remark === item.remark);
+                            if (idx !== -1) { list.splice(idx, 1);
+                                DataStore.saveStorages(list); } else { alert('未找到对应记录'); return; }
+                        }
+                        renderPickupTable();
+                        renderStorageTable();
+                        renderDetail();
+                        updateAllCounts();
+                        updatePickupStockSizes();
+                        if (document.getElementById('page-inventory').classList.contains('active')) renderInventory();
+                    }));
+            }
+        }
+
+        function exportDetailExcel() {
+            const pickups = DataStore.getPickups(),
+                storages = DataStore.getStorages();
+            const from = detail.fromDate.value,
+                to = detail.toDate.value,
+                proj = detail.projectFilter.value,
+                person = detail.personFilter.value,
+                type = detail.typeFilter.value;
+            let all = [];
+            pickups.forEach(r => {
+                if (from && r.date < from) return;
+                if (to && r.date > to) return;
+                if (proj !== '__ALL__' && r.project !== proj) return;
+                if (person !== '__ALL__' && r.person !== person) return;
+                if (type !== '__ALL__' && type !== 'pickup') return;
+                all.push({ ...r, _type: '领料', len: r.realL || 0, wid: r.realW || 0, area: r.singleArea || 0,
+                    weight: r.weight || 0, remark: '', project: r.project || '', person: r.person ||
+                        '' });
+            });
+            storages.forEach(r => {
+                if (from && r.date < from) return;
+                if (to && r.date > to) return;
+                if (proj !== '__ALL__') return;
+                if (person !== '__ALL__') return;
+                if (type !== '__ALL__' && type !== 'storage') return;
+                all.push({ ...r, _type: '入库', project: '', person: '', len: r.len || 0, wid: r.wid || 0,
+                    area: r.singleArea || 0, weight: r.weight || 0 });
+            });
+            all.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+            if (!all.length) { alert('当前筛选条件下没有数据可导出'); return; }
+            const data = all.map(r => ({ ...r, area: fmtNum(r.area || 0, 3), weight: fmtNum(r.weight || 0, 2) }));
+            exportToExcel(data, '进出库明细_' + getToday(), ['日期', '类型', '项目', '领料人', '物料名称', '规格', '数量', '长度(mm)',
+                '宽度(mm)', '单件面积(㎡)', '重量(KG)', '备注'
+            ], ['date', '_type', 'project', 'person', 'materialName', 'spec', 'qty', 'len', 'wid', 'area',
+                'weight', 'remark'
+            ]);
+        }
+
+        // ================================================================
+        // 财务统计模块 - 剔除生产退库入库
+        // ================================================================
+        const finance = {
+            fromDate: document.getElementById('financeFromDate'),
+            toDate: document.getElementById('financeToDate'),
+            refreshBtn: document.getElementById('financeRefreshBtn'),
+            excelBtn: document.getElementById('financeExcelBtn'),
+            printBtn: document.getElementById('financePrintBtn'),
+            tbody: document.getElementById('financeTableBody'),
+            totalBefore: document.getElementById('financeTotalBefore'),
+            totalIn: document.getElementById('financeTotalIn'),
+            totalOut: document.getElementById('financeTotalOut'),
+            totalBalance: document.getElementById('financeTotalBalance'),
+            dateRange: document.getElementById('financeDateRange'),
+            collapseBadge: document.getElementById('financeCollapseBadge'),
+        };
+
+        function renderFinance() {
+            const pickups = DataStore.getPickups();
+            const storages = DataStore.getStorages();
+            const mats = DataStore.getMaterials();
+            const from = finance.fromDate.value;
+            const to = finance.toDate.value;
+
+            // 期间筛选 —— 入库剔除生产退库（sourceId 存在）
+            let fp = pickups.slice();
+            let fs = storages.filter(r => !r.sourceId); // 剔除退库入库
+            if (from) { fp = fp.filter(r => r.date >= from);
+                fs = fs.filter(r => r.date >= from); }
+            if (to) { fp = fp.filter(r => r.date <= to);
+                fs = fs.filter(r => r.date <= to); }
+
+            const beforeFrom = from || '1970-01-01';
+            const beforePickups = pickups.filter(r => r.date < beforeFrom);
+            const beforeStorages = storages.filter(r => r.date < beforeFrom && !r.sourceId); // 期初也剔除退库
+
+            // 收集所有物料编码
+            const allCodes = new Set();
+            pickups.forEach(r => { if (r.matCode) allCodes.add(r.matCode); });
+            storages.forEach(r => { if (r.matCode) allCodes.add(r.matCode); });
+
+            const groups = new Map();
+            allCodes.forEach(code => {
+                const mat = mats.find(m => m.code === code);
+                groups.set(code, {
+                    matCode: code,
+                    name: mat ? mat.name : '',
+                    spec: mat ? mat.spec : '',
+                    type: mat ? mat.type : '',
+                    beforeStorage: 0,
+                    beforePickup: 0,
+                    storage: 0,
+                    pickup: 0,
+                });
+            });
+
+            if (groups.size === 0) {
+                finance.tbody.innerHTML = '<tr class="empty-row"><td colspan="8">暂无数据</td></tr>';
+                finance.totalBefore.textContent = '0.00';
+                finance.totalIn.textContent = '0.00';
+                finance.totalOut.textContent = '0.00';
+                finance.totalBalance.textContent = '0.00';
+                finance.dateRange.textContent = (from && to) ? from + ' 至 ' + to : (from ? '从 ' + from + ' 起' : (to ?
+                    '至 ' + to + ' 止' : '全部'));
+                finance.collapseBadge.textContent = '0';
+                finance.collapseBadge.className = 'badge-count zero';
+                return;
+            }
+
+            // 期初计算
+            beforeStorages.forEach(s => {
+                if (groups.has(s.matCode)) {
+                    const g = groups.get(s.matCode);
+                    g.beforeStorage += (s.weight || 0);
+                }
+            });
+            beforePickups.forEach(p => {
+                if (groups.has(p.matCode)) {
+                    const g = groups.get(p.matCode);
+                    const net = (p.weight || 0); // 项目用料重量
+                    g.beforePickup += net;
+                }
+            });
+
+            // 期间入库（已剔除退库）
+            fs.forEach(s => {
+                if (groups.has(s.matCode)) {
+                    const g = groups.get(s.matCode);
+                    g.storage += (s.weight || 0);
+                }
+            });
+
+            // 期间出库（项目用料重量）
+            fp.forEach(p => {
+                if (groups.has(p.matCode)) {
+                    const g = groups.get(p.matCode);
+                    g.pickup += (p.weight || 0);
+                }
+            });
+
+            const result = [];
+            let totalBefore = 0,
+                totalIn = 0,
+                totalOut = 0,
+                totalBalance = 0;
+            groups.forEach((g, code) => {
+                if (!g.name) {
+                    const mat = mats.find(m => m.code === code);
+                    if (mat) { g.name = mat.name;
+                        g.spec = mat.spec;
+                        g.type = mat.type; }
+                }
+                const before = g.beforeStorage - g.beforePickup;
+                const inW = g.storage;
+                const outW = g.pickup;
+                const balance = before + inW - outW;
+                result.push({
+                    matCode: code,
+                    name: g.name || code,
+                    spec: g.spec || '-',
+                    type: g.type || '未知',
+                    before: before,
+                    inWeight: inW,
+                    outWeight: outW,
+                    balance: balance,
+                });
+                totalBefore += before;
+                totalIn += inW;
+                totalOut += outW;
+                totalBalance += balance;
+            });
+
+            result.sort((a, b) => a.name.localeCompare(b.name) || a.spec.localeCompare(b.spec));
+
+            finance.totalBefore.textContent = fmtNum(totalBefore, 2);
+            finance.totalIn.textContent = fmtNum(totalIn, 2);
+            finance.totalOut.textContent = fmtNum(totalOut, 2);
+            finance.totalBalance.textContent = fmtNum(totalBalance, 2);
+            finance.dateRange.textContent = (from && to) ? from + ' 至 ' + to : (from ? '从 ' + from + ' 起' : (to ?
+                '至 ' + to + ' 止' : '全部'));
+            finance.collapseBadge.textContent = result.length;
+            finance.collapseBadge.className = 'badge-count' + (result.length === 0 ? ' zero' : '');
+
+            if (!result.length) {
+                finance.tbody.innerHTML = '<tr class="empty-row"><td colspan="8">暂无数据</td></tr>';
+                return;
+            }
+
+            let html = '';
+            result.forEach(r => {
+                const typeLabel = r.type === 'plate' ? '板材' : (r.type === 'profile' ? '型材' : '未知');
+                const balanceColor = r.balance < -0.001 ? 'color:var(--danger);' : 'color:var(--primary);';
+                html += `<tr>
+                    <td><code style="font-size:11px;background:var(--gray-100);padding:2px 6px;border-radius:4px;">${r.matCode}</code></td>
+                    <td><strong>${r.name}</strong></td>
+                    <td class="col-spec">${r.spec}</td>
+                    <td>${typeLabel}</td>
+                    <td style="font-weight:600;">${fmtNum(r.before,2)}</td>
+                    <td style="font-weight:600;color:var(--success);">${fmtNum(r.inWeight,2)}</td>
+                    <td style="font-weight:600;color:var(--danger);">${fmtNum(r.outWeight,2)}</td>
+                    <td style="font-weight:700;${balanceColor}">${fmtNum(r.balance,2)}</td>
+                </tr>`;
+            });
+            finance.tbody.innerHTML = html;
+        }
+
+        function exportFinanceExcel() {
+            const pickups = DataStore.getPickups();
+            const storages = DataStore.getStorages();
+            const mats = DataStore.getMaterials();
+            const from = finance.fromDate.value;
+            const to = finance.toDate.value;
+
+            let fp = pickups.slice();
+            let fs = storages.filter(r => !r.sourceId); // 剔除退库
+            if (from) { fp = fp.filter(r => r.date >= from);
+                fs = fs.filter(r => r.date >= from); }
+            if (to) { fp = fp.filter(r => r.date <= to);
+                fs = fs.filter(r => r.date <= to); }
+
+            const beforeFrom = from || '1970-01-01';
+            const beforePickups = pickups.filter(r => r.date < beforeFrom);
+            const beforeStorages = storages.filter(r => r.date < beforeFrom && !r.sourceId);
+
+            const allCodes = new Set();
+            pickups.forEach(r => { if (r.matCode) allCodes.add(r.matCode); });
+            storages.forEach(r => { if (r.matCode) allCodes.add(r.matCode); });
+
+            const groups = new Map();
+            allCodes.forEach(code => {
+                const mat = mats.find(m => m.code === code);
+                groups.set(code, {
+                    matCode: code,
+                    name: mat ? mat.name : '',
+                    spec: mat ? mat.spec : '',
+                    type: mat ? mat.type : '',
+                    beforeStorage: 0,
+                    beforePickup: 0,
+                    storage: 0,
+                    pickup: 0,
+                });
+            });
+
+            beforeStorages.forEach(s => { if (groups.has(s.matCode)) { const g = groups.get(s.matCode);
+                    g.beforeStorage += (s.weight || 0); } });
+            beforePickups.forEach(p => { if (groups.has(p.matCode)) { const g = groups.get(p.matCode);
+                    g.beforePickup += (p.weight || 0); } });
+            fs.forEach(s => { if (groups.has(s.matCode)) { const g = groups.get(s.matCode);
+                    g.storage += (s.weight || 0); } });
+            fp.forEach(p => { if (groups.has(p.matCode)) { const g = groups.get(p.matCode);
+                    g.pickup += (p.weight || 0); } });
+
+            const result = [];
+            groups.forEach((g, code) => {
+                if (!g.name) { const mat = mats.find(m => m.code === code); if (mat) { g.name = mat.name;
+                        g.spec = mat.spec;
+                        g.type = mat.type; } }
+                const before = g.beforeStorage - g.beforePickup;
+                const inW = g.storage;
+                const outW = g.pickup;
+                result.push({
+                    matCode: code,
+                    name: g.name || code,
+                    spec: g.spec || '-',
+                    type: g.type === 'plate' ? '板材' : (g.type === 'profile' ? '型材' : '未知'),
+                    before: fmtNum(before, 2),
+                    inWeight: fmtNum(inW, 2),
+                    outWeight: fmtNum(outW, 2),
+                    balance: fmtNum(before + inW - outW, 2),
+                });
+            });
+            result.sort((a, b) => a.name.localeCompare(b.name) || a.spec.localeCompare(b.spec));
+
+            if (!result.length) { alert('当前筛选条件下没有数据可导出'); return; }
+            exportToExcel(result, '财务统计_' + getToday(),
+                ['物料编码', '物料名称', '规格', '类型', '期初(KG)', '入库(KG)', '出库(KG)', '结存(KG)'],
+                ['matCode', 'name', 'spec', 'type', 'before', 'inWeight', 'outWeight', 'balance']);
+        }
+
+        function printFinance() { window.print(); }
+
+        // ================================================================
+        // 即时库存模块 - 增加导出Excel功能
+        // ================================================================
+        const inventory = {
+            tbody: document.getElementById('inventoryTableBody'),
+            totalWeight: document.getElementById('invTotalWeight'),
+            totalQty: document.getElementById('invTotalQty'),
+            totalKinds: document.getElementById('invTotalKinds'),
+            refreshBtn: document.getElementById('inventoryRefreshBtn'),
+            excelBtn: document.getElementById('inventoryExcelBtn'),
+            collapseBadge: document.getElementById('inventoryCollapseBadge'),
+        };
+
+        function renderInventory() {
+            const pickups = DataStore.getPickups();
+            const storages = DataStore.getStorages();
+            const mats = DataStore.getMaterials();
+
+            const map = new Map();
+
+            storages.forEach(s => {
+                const mat = mats.find(m => m.code === s.matCode);
+                if (!mat) return;
+                let len = s.len || 0;
+                let wid = s.wid || 0;
+                if (mat.type === 'profile' && wid === 0) wid = 1000;
+                const key = s.matCode + '|' + len + '|' + wid;
+                if (!map.has(key)) {
+                    map.set(key, {
+                        matCode: s.matCode,
+                        name: s.materialName || mat.name,
+                        spec: s.spec || mat.spec,
+                        type: mat.type,
+                        len: len,
+                        wid: wid,
+                        totalInWeight: 0,
+                        totalOutWeight: 0,
+                        totalInQty: 0,
+                        totalOutQty: 0,
+                    });
+                }
+                const entry = map.get(key);
+                entry.totalInWeight += (s.weight || 0);
+                entry.totalInQty += (s.qty || 0);
+            });
+
+            pickups.forEach(p => {
+                const mat = mats.find(m => m.code === p.matCode);
+                if (!mat) return;
+                let len = p.realL || 0;
+                let wid = p.realW || 0;
+                if (mat.type === 'profile' && wid === 0) wid = 1000;
+                const key = p.matCode + '|' + len + '|' + wid;
+                if (!map.has(key)) {
+                    map.set(key, {
+                        matCode: p.matCode,
+                        name: p.materialName || mat.name,
+                        spec: p.spec || mat.spec,
+                        type: mat.type,
+                        len: len,
+                        wid: wid,
+                        totalInWeight: 0,
+                        totalOutWeight: 0,
+                        totalInQty: 0,
+                        totalOutQty: 0,
+                    });
+                }
+                const entry = map.get(key);
+                const grossWeight = (p.weight || 0) + (p.returnWeight || 0);
+                entry.totalOutWeight += grossWeight;
+                entry.totalOutQty += (p.qty || 0);
+            });
+
+            const result = [];
+            let totalWeight = 0,
+                totalQty = 0;
+            map.forEach((entry, key) => {
+                const stockWeight = entry.totalInWeight - entry.totalOutWeight;
+                const stockQty = entry.totalInQty - entry.totalOutQty;
+                if (stockWeight > 0.001 || stockQty > 0.001) {
+                    result.push({
+                        matCode: entry.matCode,
+                        name: entry.name,
+                        spec: entry.spec,
+                        type: entry.type === 'plate' ? '板材' : '型材',
+                        size: entry.len + '×' + entry.wid,
+                        stockWeight: stockWeight,
+                        stockQty: Math.round(stockQty * 100) / 100,
+                    });
+                    totalWeight += stockWeight;
+                    totalQty += stockQty;
+                }
+            });
+
+            result.sort((a, b) => a.name.localeCompare(b.name) || a.spec.localeCompare(b.spec) || a.size.localeCompare(b
+                .size));
+
+            inventory.totalWeight.textContent = fmtNum(totalWeight, 2);
+            inventory.totalQty.textContent = fmtNum(totalQty, 0);
+            inventory.totalKinds.textContent = result.length;
+            inventory.collapseBadge.textContent = result.length;
+            inventory.collapseBadge.className = 'badge-count' + (result.length === 0 ? ' zero' : '');
+
+            if (!result.length) {
+                inventory.tbody.innerHTML = '<tr class="empty-row"><td colspan="7">暂无库存数据</td></tr>';
+                return;
+            }
+
+            let html = '';
+            result.forEach(item => {
+                html += `<tr>
+                    <td><code style="font-size:11px;background:var(--gray-100);padding:2px 6px;border-radius:4px;">${item.matCode}</code></td>
+                    <td><strong>${item.name}</strong></td>
+                    <td class="col-spec">${item.spec}</td>
+                    <td>${item.type}</td>
+                    <td>${item.size}</td>
+                    <td class="col-qty">${fmtNum(item.stockQty, 0)}</td>
+                    <td style="font-weight:700;color:var(--primary);">${fmtNum(item.stockWeight, 2)}</td>
+                </tr>`;
+            });
+            inventory.tbody.innerHTML = html;
+        }
+
+        // 即时库存导出Excel
+        function exportInventoryExcel() {
+            const pickups = DataStore.getPickups();
+            const storages = DataStore.getStorages();
+            const mats = DataStore.getMaterials();
+
+            const map = new Map();
+
+            storages.forEach(s => {
+                const mat = mats.find(m => m.code === s.matCode);
+                if (!mat) return;
+                let len = s.len || 0;
+                let wid = s.wid || 0;
+                if (mat.type === 'profile' && wid === 0) wid = 1000;
+                const key = s.matCode + '|' + len + '|' + wid;
+                if (!map.has(key)) {
+                    map.set(key, {
+                        matCode: s.matCode,
+                        name: s.materialName || mat.name,
+                        spec: s.spec || mat.spec,
+                        type: mat.type,
+                        len: len,
+                        wid: wid,
+                        totalInWeight: 0,
+                        totalOutWeight: 0,
+                        totalInQty: 0,
+                        totalOutQty: 0,
+                    });
+                }
+                const entry = map.get(key);
+                entry.totalInWeight += (s.weight || 0);
+                entry.totalInQty += (s.qty || 0);
+            });
+
+            pickups.forEach(p => {
+                const mat = mats.find(m => m.code === p.matCode);
+                if (!mat) return;
+                let len = p.realL || 0;
+                let wid = p.realW || 0;
+                if (mat.type === 'profile' && wid === 0) wid = 1000;
+                const key = p.matCode + '|' + len + '|' + wid;
+                if (!map.has(key)) {
+                    map.set(key, {
+                        matCode: p.matCode,
+                        name: p.materialName || mat.name,
+                        spec: p.spec || mat.spec,
+                        type: mat.type,
+                        len: len,
+                        wid: wid,
+                        totalInWeight: 0,
+                        totalOutWeight: 0,
+                        totalInQty: 0,
+                        totalOutQty: 0,
+                    });
+                }
+                const entry = map.get(key);
+                const grossWeight = (p.weight || 0) + (p.returnWeight || 0);
+                entry.totalOutWeight += grossWeight;
+                entry.totalOutQty += (p.qty || 0);
+            });
+
+            const result = [];
+            map.forEach((entry, key) => {
+                const stockWeight = entry.totalInWeight - entry.totalOutWeight;
+                const stockQty = entry.totalInQty - entry.totalOutQty;
+                if (stockWeight > 0.001 || stockQty > 0.001) {
+                    result.push({
+                        matCode: entry.matCode,
+                        name: entry.name,
+                        spec: entry.spec,
+                        type: entry.type === 'plate' ? '板材' : '型材',
+                        size: entry.len + '×' + entry.wid,
+                        stockQty: fmtNum(Math.round(stockQty * 100) / 100, 0),
+                        stockWeight: fmtNum(stockWeight, 2),
+                    });
+                }
+            });
+
+            result.sort((a, b) => a.name.localeCompare(b.name) || a.spec.localeCompare(b.spec) || a.size.localeCompare(b
+                .size));
+
+            if (!result.length) { alert('当前没有库存数据可导出'); return; }
+            exportToExcel(result, '即时库存_' + getToday(),
+                ['物料编码', '物料名称', '规格', '类型', '尺寸(长×宽 mm)', '库存数量(件)', '库存重量(KG)'],
+                ['matCode', 'name', 'spec', 'type', 'size', 'stockQty', 'stockWeight']);
+        }
+
+        // ================================================================
+        // 项目管理、领料人管理、新增物料、数据中心
+        // ================================================================
+        function renderProjects() {
+            const list = DataStore.getProjects(),
+                tbody = document.getElementById('projectListBody');
+            if (!list.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="3">暂无项目</td></tr>'; return; }
+            let html = '';
+            list.forEach((p, i) => { html += `<tr><td>${i+1}</td><td>${p}</td><td class="no-print"><button class="del-item" data-idx="${i}" data-type="project">删除</button></td></tr>`; });
+            tbody.innerHTML = html;
+            tbody.querySelectorAll('.del-item[data-type="project"]').forEach(b => b.addEventListener('click', function() {
+                if (!Auth.isAdmin()) return;
+                const i = parseInt(this.dataset.idx),
+                    l = DataStore.getProjects();
+                if (confirm('确定删除项目 "' + l[i] + '" 吗？')) { l.splice(i, 1);
+                    DataStore.saveProjects(l);
+                    renderProjects();
+                    populatePickupOptions();
+                    populateDetailFilters();
+                    updateDataCenterStatus(); }
+            }));
+        }
+
+        function addProject() {
+            const input = document.getElementById('newProjectInput'),
+                name = input.value.trim();
+            if (!name) { alert('请输入项目名称'); return; }
+            const list = DataStore.getProjects();
+            if (list.includes(name)) { alert('项目已存在'); return; }
+            list.push(name);
+            DataStore.saveProjects(list);
+            renderProjects();
+            populatePickupOptions();
+            populateDetailFilters();
+            updateDataCenterStatus();
+            input.value = '';
+            input.focus();
+        }
+
+        function renderPersons() {
+            const list = DataStore.getPersons(),
+                tbody = document.getElementById('personListBody');
+            if (!list.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="3">暂无领料人</td></tr>'; return; }
+            let html = '';
+            list.forEach((p, i) => { html += `<tr><td>${i+1}</td><td>${p}</td><td class="no-print"><button class="del-item" data-idx="${i}" data-type="person">删除</button></td></tr>`; });
+            tbody.innerHTML = html;
+            tbody.querySelectorAll('.del-item[data-type="person"]').forEach(b => b.addEventListener('click', function() {
+                if (!Auth.isAdmin()) return;
+                const i = parseInt(this.dataset.idx),
+                    l = DataStore.getPersons();
+                if (confirm('确定删除领料人 "' + l[i] + '" 吗？')) { l.splice(i, 1);
+                    DataStore.savePersons(l);
+                    renderPersons();
+                    populatePickupOptions();
+                    populateDetailFilters();
+                    updateDataCenterStatus(); }
+            }));
+        }
+
+        function addPerson() {
+            const input = document.getElementById('newPersonInput'),
+                name = input.value.trim();
+            if (!name) { alert('请输入领料人姓名'); return; }
+            const list = DataStore.getPersons();
+            if (list.includes(name)) { alert('领料人已存在'); return; }
+            list.push(name);
+            DataStore.savePersons(list);
+            renderPersons();
+            populatePickupOptions();
+            populateDetailFilters();
+            updateDataCenterStatus();
+            input.value = '';
+            input.focus();
+        }
+
+        // 新增物料
+        const newMat = {
+            code: document.getElementById('newMatCode'),
+            name: document.getElementById('newMatName'),
+            spec: document.getElementById('newMatSpec'),
+            type: document.getElementById('newMatType'),
+            density: document.getElementById('newMatDensity'),
+            perMeter: document.getElementById('newMatPerMeter'),
+            densityGroup: document.getElementById('newMatDensityGroup'),
+            perMeterGroup: document.getElementById('newMatPerMeterGroup'),
+            submitBtn: document.getElementById('newMatSubmitBtn'),
+            listBody: document.getElementById('matListBody'),
+            countDisplay: document.getElementById('matCountDisplay'),
+        };
+        newMat.type.addEventListener('change', function() {
+            if (this.value === 'plate') { newMat.densityGroup.style.display = 'block';
+                newMat.perMeterGroup.style.display = 'none'; } else { newMat.densityGroup.style.display = 'none';
+                newMat.perMeterGroup.style.display = 'block'; }
+        });
+
+        function renderMaterialList() {
+            const mats = DataStore.getMaterials();
+            newMat.countDisplay.textContent = mats.length;
+            if (!mats.length) { newMat.listBody.innerHTML = '<tr class="empty-row"><td colspan="6">暂无物料</td></tr>'; return; }
+            let html = '';
+            const isAdmin = Auth.isAdmin();
+            mats.forEach((m, i) => {
+                html += `<tr><td><code>${m.code}</code></td><td>${m.name}</td><td>${m.spec}</td>
+                    <td>${m.type==='plate'?'板材':'型材'}</td><td>${m.type==='plate'?m.density+' g/cm³':m.perMeterWeight+' KG/m'}</td>
+                    <td class="no-print">${isAdmin ? `<button class="del-mat" data-idx="${i}">删除</button>` : '—'}</td></tr>`;
+            });
+            newMat.listBody.innerHTML = html;
+            if (isAdmin) {
+                newMat.listBody.querySelectorAll('.del-mat').forEach(b => b.addEventListener('click', function() {
+                    const i = parseInt(this.dataset.idx),
+                        mats = DataStore.getMaterials();
+                    if (confirm('确定删除物料 "' + mats[i].name + ' ' + mats[i].spec + '" 吗？')) {
+                        mats.splice(i, 1);
+                        DataStore.saveMaterials(mats);
+                        renderMaterialList();
+                        populateAllSelects();
+                        updatePickupParams();
+                        updateStorageParams();
+                        updateDataCenterStatus();
+                        if (document.getElementById('page-inventory').classList.contains('active')) renderInventory();
+                    }
+                }));
+            }
+        }
+
+        function addNewMaterial() {
+            if (!Auth.isAdmin()) return;
+            const code = newMat.code.value.trim(),
+                name = newMat.name.value.trim(),
+                spec = newMat.spec.value.trim(),
+                type = newMat.type.value;
+            const density = parseNum(newMat.density.value),
+                perMeter = parseNum(newMat.perMeter.value);
+            if (!code || !name || !spec) { alert('请填写完整的物料代码、名称和规格！'); return; }
+            const mats = DataStore.getMaterials();
+            if (mats.some(m => m.code === code)) { alert('物料代码 "' + code + '" 已存在！'); return; }
+            let newItem;
+            if (type === 'plate') {
+                if (density <= 0) { alert('密度必须大于0'); return; }
+                let thickness = extractNumberFromSpec(spec);
+                if (thickness === null || thickness <= 0) {
+                    const input = prompt('无法从规格中自动提取厚度，请手动输入厚度 (mm)：', '');
+                    if (input === null) return;
+                    thickness = parseFloat(input);
+                    if (isNaN(thickness) || thickness <= 0) { alert('厚度必须为正数'); return; }
+                }
+                newItem = { code, name, spec, type, density, thickness };
+            } else {
+                if (perMeter <= 0) { alert('每米重量必须大于0'); return; }
+                newItem = { code, name, spec, type, perMeterWeight: perMeter };
+            }
+            mats.push(newItem);
+            DataStore.saveMaterials(mats);
+            renderMaterialList();
+            populateAllSelects();
+            updatePickupParams();
+            updateStorageParams();
+            updateDataCenterStatus();
+            if (document.getElementById('page-inventory').classList.contains('active')) renderInventory();
+            newMat.code.value = '';
+            newMat.name.value = '';
+            newMat.spec.value = '';
+            newMat.density.value = '7.85';
+            newMat.perMeter.value = '5.00';
+            newMat.code.focus();
+            alert('✅ 物料 "' + name + ' ' + spec + '" 添加成功！');
+        }
+
+        // 用户管理
+        function renderUserList() {
+            if (!Auth.isAdmin()) return;
+            const users = Auth.getUsers();
+            const container = document.getElementById('userListContainer');
+            const current = Auth.getCurrentUser();
+            if (!users.length) { container.innerHTML = '<div style="padding:12px 0;color:var(--gray-400);">暂无用户</div>'; return; }
+            let html = '';
+            users.forEach(u => {
+                const isSelf = u.username === current.username;
+                html += `<div class="user-row"><span class="uname">${u.username}</span><span class="urole ${u.role}">${u.role==='admin'?'管理员':'员工'}</span><span style="flex:1;"></span>${!isSelf?`<button class="del-item" data-user="${u.username}">删除</button>`:`<span style="font-size:12px;color:var(--gray-400);">当前账号</span>`}</div>`;
+            });
+            container.innerHTML = html;
+            container.querySelectorAll('.del-item[data-user]').forEach(b => {
+                b.addEventListener('click', function() {
+                    const username = this.dataset.user;
+                    if (confirm('确定删除用户 "' + username + '" 吗？')) {
+                        if (Auth.deleteUser(username)) { renderUserList();
+                            updateDataCenterStatus();
+                            showDCMessage('✅ 用户已删除', 'success'); } else { showDCMessage(
+                                '❌ 删除失败：不能删除自己或需保留至少一个管理员', 'error'); }
+                    }
+                });
+            });
+        }
+
+        function addUser() {
+            if (!Auth.isAdmin()) return;
+            const username = document.getElementById('newUserName').value.trim();
+            const password = document.getElementById('newUserPass').value.trim();
+            const role = document.getElementById('newUserRole').value;
+            if (!username || !password) { alert('请输入用户名和密码'); return; }
+            if (Auth.addUser(username, password, role)) { renderUserList();
+                updateDataCenterStatus();
+                showDCMessage('✅ 用户添加成功', 'success');
+                document.getElementById('newUserName').value = '';
+                document.getElementById('newUserPass').value = ''; } else { showDCMessage('❌ 用户名已存在', 'error'); }
+        }
+
+        // 数据中心
+        const dc = {
+            matCount: document.getElementById('dcMatCount'),
+            pickupCount: document.getElementById('dcPickupCount'),
+            storageCount: document.getElementById('dcStorageCount'),
+            projectCount: document.getElementById('dcProjectCount'),
+            personCount: document.getElementById('dcPersonCount'),
+            lastBackup: document.getElementById('dcLastBackup'),
+            exportBtn: document.getElementById('dcExportBtn'),
+            importBtn: document.getElementById('dcImportBtn'),
+            fileInput: document.getElementById('dcFileInput'),
+            importArea: document.getElementById('dcImportArea'),
+            fileName: document.getElementById('dcFileName'),
+            confirmImport: document.getElementById('dcConfirmImport'),
+            cancelImport: document.getElementById('dcCancelImport'),
+            clearRecordsBtn: document.getElementById('dcClearRecordsBtn'),
+            resetAllBtn: document.getElementById('dcResetAllBtn'),
+            message: document.getElementById('dcMessage'),
+        };
+        let pendingImportData = null;
+
+        function updateDataCenterStatus() {
+            if (!Auth.isAdmin()) return;
+            dc.matCount.textContent = DataStore.getMaterials().length;
+            dc.pickupCount.textContent = DataStore.getPickups().length;
+            dc.storageCount.textContent = DataStore.getStorages().length;
+            dc.projectCount.textContent = DataStore.getProjects().length;
+            dc.personCount.textContent = DataStore.getPersons().length;
+            dc.lastBackup.textContent = formatDateISO(DataStore.getLastBackup());
+        }
+
+        function showDCMessage(text, type = 'info') {
+            const el = dc.message;
+            el.textContent = text;
+            el.className = 'show ' + type;
+            setTimeout(() => { el.className = ''; }, 5000);
+        }
+
+        function handleExport() {
+            try {
+                const data = DataStore.exportAll();
+                const json = JSON.stringify(data, null, 2);
+                const blob = new Blob([json], { type: 'application/json' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = '钢材管理_备份_' + getToday() + '.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                DataStore.setLastBackup(new Date().toISOString());
+                updateDataCenterStatus();
+                showDCMessage('✅ 数据导出成功！', 'success');
+            } catch (e) { showDCMessage('❌ 导出失败：' + e.message, 'error'); }
+        }
+
+        function handleImportClick() { dc.fileInput.click(); }
+
+        function handleFileChange(e) {
+            const file = e.target.files[0];
+            if (!file) { dc.importArea.classList.remove('show'); return; }
+            dc.fileName.textContent = file.name;
+            dc.importArea.classList.add('show');
+            pendingImportData = null;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    const json = JSON.parse(ev.target.result);
+                    if (!json.materials || !json.pickups || !json.storages || !json.projects || !json.persons) throw new Error(
+                        '数据格式不完整');
+                    pendingImportData = json;
+                    showDCMessage('📄 文件 "' + file.name + '" 读取成功，点击确认导入将完全替换当前数据。', 'info');
+                } catch (err) { showDCMessage('❌ 文件解析失败：' + err.message, 'error');
+                    dc.importArea.classList.remove('show');
+                    dc.fileInput.value = '';
+                    pendingImportData = null; }
+            };
+            reader.readAsText(file);
+        }
+
+        function confirmImport() {
+            if (!pendingImportData) { showDCMessage('⚠️ 请先选择有效的备份文件', 'error'); return; }
+            if (!confirm('⚠️ 导入将完全替换当前所有数据，确定继续吗？')) return;
+            try {
+                DataStore.importAll(pendingImportData);
+                populateAllSelects();
+                updatePickupParams();
+                updateStorageParams();
+                renderPickupTable();
+                renderStorageTable();
+                renderMaterialList();
+                renderDetail();
+                renderFinance();
+                renderInventory();
+                renderProjects();
+                renderPersons();
+                updateAllCounts();
+                updateDataCenterStatus();
+                dc.importArea.classList.remove('show');
+                dc.fileInput.value = '';
+                pendingImportData = null;
+                showDCMessage('✅ 数据导入成功！', 'success');
+            } catch (e) { showDCMessage('❌ 导入失败：' + e.message, 'error'); }
+        }
+
+        function cancelImport() {
+            dc.importArea.classList.remove('show');
+            dc.fileInput.value = '';
+            pendingImportData = null;
+            showDCMessage('已取消导入', 'info');
+        }
+
+        function handleClearRecords() {
+            if (!Auth.isAdmin()) return;
+            const p = DataStore.getPickups().length,
+                s = DataStore.getStorages().length;
+            if (p === 0 && s === 0) { showDCMessage('📭 当前没有单据需要清空', 'info'); return; }
+            if (!confirm('确定清空所有领料（' + p + '条）和入库（' + s + '条）记录吗？')) return;
+            DataStore.clearRecords();
+            renderPickupTable();
+            renderStorageTable();
+            renderDetail();
+            renderFinance();
+            renderInventory();
+            updateAllCounts();
+            updateDataCenterStatus();
+            updatePickupStockSizes();
+            showDCMessage('🗑️ 已清空所有领料和入库单据', 'success');
+        }
+
+        function handleResetAll() {
+            if (!Auth.isAdmin()) return;
+            if (!confirm('⚠️ 恢复出厂设置将删除所有自定义数据，确定继续吗？')) return;
+            if (!confirm('⚠️ 再次确认：此操作不可撤销！')) return;
+            DataStore.resetToDefault();
+            populateAllSelects();
+            updatePickupParams();
+            updateStorageParams();
+            renderPickupTable();
+            renderStorageTable();
+            renderMaterialList();
+            renderDetail();
+            renderFinance();
+            renderInventory();
+            renderProjects();
+            renderPersons();
+            updateAllCounts();
+            updateDataCenterStatus();
+            updatePickupStockSizes();
+            showDCMessage('🔄 已恢复出厂设置', 'success');
+        }
+
+        // ================================================================
+        // 辅助填充和事件绑定
+        // ================================================================
+        function populateSelect(sel, selectedCode) {
+            const mats = DataStore.getMaterials();
+            sel.innerHTML = '';
+            mats.forEach((m, i) => { const o = document.createElement('option');
+                o.value = i;
+                o.textContent = m.code + ' ' + m.name + ' ' + m.spec;
+                sel.appendChild(o); });
+            if (selectedCode !== undefined) { const idx = mats.findIndex(m => m.code === selectedCode); if (idx >= 0) sel
+                    .value = idx; }
+        }
+
+        function populateAllSelects() {
+            const mats = DataStore.getMaterials();
+            const pIdx = parseInt(pickup.matSelect.value, 10);
+            populateSelect(pickup.matSelect);
+            if (pIdx < mats.length) pickup.matSelect.value = pIdx;
+            const sIdx = parseInt(storage.matSelect.value, 10);
+            populateSelect(storage.matSelect);
+            if (sIdx < mats.length) storage.matSelect.value = sIdx;
+            populatePickupOptions();
+            populateDetailFilters();
+        }
+
+        function populatePickupOptions() {
+            populateSelectOptions(document.getElementById('pickupProject'), DataStore.getProjects(), '-- 选择 --');
+            populateSelectOptions(document.getElementById('pickupPerson'), DataStore.getPersons(), '-- 选择 --');
+        }
+
+        function populateSelectOptions(sel, items, placeholder) {
+            const cur = sel.value;
+            sel.innerHTML = '';
+            if (placeholder) { const o = document.createElement('option');
+                o.value = '';
+                o.textContent = placeholder;
+                sel.appendChild(o); }
+            items.forEach(i => { const o = document.createElement('option');
+                o.value = i;
+                o.textContent = i;
+                sel.appendChild(o); });
+            if (cur && items.includes(cur)) sel.value = cur;
+        }
+
+        function populateDetailFilters() {
+            const projs = DataStore.getProjects(),
+                persons = DataStore.getPersons();
+            const ps = document.getElementById('detailProjectFilter'),
+                pe = document.getElementById('detailPersonFilter');
+            const cp = ps.value,
+                ce = pe.value;
+            ps.innerHTML = '<option value="__ALL__">全部项目</option>';
+            projs.forEach(p => { const o = document.createElement('option');
+                o.value = p;
+                o.textContent = p;
+                ps.appendChild(o); });
+            if (cp && projs.includes(cp)) ps.value = cp;
+            pe.innerHTML = '<option value="__ALL__">全部人员</option>';
+            persons.forEach(p => { const o = document.createElement('option');
+                o.value = p;
+                o.textContent = p;
+                pe.appendChild(o); });
+            if (ce && persons.includes(ce)) pe.value = ce;
+        }
+
+        function updateAllCounts() {
+            document.getElementById('pickupCount').textContent = DataStore.getPickups().length;
+            document.getElementById('storageCount').textContent = DataStore.getStorages().length;
+        }
+
+        // ================================================================
+        // 应用初始化与登录
+        // ================================================================
+        function initAppAfterLogin() {
+            DataStore.fixMaterialThickness();
+            DataStore.fixInitialStorageDate();
+            DataStore.initDefaultStorages();
+
+            const today = getToday();
+            pickup.date.value = today;
+            storage.date.value = today;
+            detail.fromDate.value = '';
+            detail.toDate.value = '';
+            finance.fromDate.value = '';
+            finance.toDate.value = '';
+
+            populateAllSelects();
+            updatePickupParams();
+            updateStorageParams();
+            renderPickupTable();
+            renderStorageTable();
+            renderMaterialList();
+            renderDetail();
+            renderFinance();
+            renderInventory();
+            renderProjects();
+            renderPersons();
+            updateAllCounts();
+            updateDataCenterStatus();
+            applyUIPermissions();
+
+            pickup.matSelect.addEventListener('change', function() { updatePickupParams();
+                updatePickupStockSizes(); });
+            storage.matSelect.addEventListener('change', function() { updateStorageParams(); });
+            storage.remarkFilter.addEventListener('input', function() { renderStorageTable(); });
+            pickup.stockSize.addEventListener('change', function() { if (this.value) { const p = this.value.split(
+                    '|');
+                    pickup.realLen.value = p[0];
+                    pickup.realWid.value = p[1]; } });
+            pickup.addBtn.addEventListener('click', addPickup);
+            pickup.clearBtn.addEventListener('click', clearPickups);
+            pickup.printBtn.addEventListener('click', printPickup);
+            pickup.excelBtn.addEventListener('click', exportPickupExcel);
+            storage.addBtn.addEventListener('click', addStorage);
+            storage.clearBtn.addEventListener('click', clearStorages);
+            storage.printBtn.addEventListener('click', printStorage);
+            storage.excelBtn.addEventListener('click', exportStorageExcel);
+            detail.refreshBtn.addEventListener('click', renderDetail);
+            detail.printBtn.addEventListener('click', function() { window.print(); });
+            detail.excelBtn.addEventListener('click', exportDetailExcel);
+            finance.refreshBtn.addEventListener('click', renderFinance);
+            finance.printBtn.addEventListener('click', printFinance);
+            finance.excelBtn.addEventListener('click', exportFinanceExcel);
+            inventory.refreshBtn.addEventListener('click', renderInventory);
+            inventory.excelBtn.addEventListener('click', exportInventoryExcel);
+            document.getElementById('addProjectBtn').addEventListener('click', addProject);
+            document.getElementById('addPersonBtn').addEventListener('click', addPerson);
+            newMat.submitBtn.addEventListener('click', addNewMaterial);
+            document.getElementById('addUserBtn').addEventListener('click', addUser);
+            dc.exportBtn.addEventListener('click', handleExport);
+            dc.importBtn.addEventListener('click', handleImportClick);
+            dc.fileInput.addEventListener('change', handleFileChange);
+            dc.confirmImport.addEventListener('click', confirmImport);
+            dc.cancelImport.addEventListener('click', cancelImport);
+            dc.clearRecordsBtn.addEventListener('click', handleClearRecords);
+            dc.resetAllBtn.addEventListener('click', handleResetAll);
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.addEventListener('click', function() { if (this
+                    .dataset.page) switchPage(this.dataset.page); }));
+
+            console.log('✅ 钢材管理系统 V8.2 已启动 (财务出库+结存, 库存导出Excel)');
+        }
+
+        function applyUIPermissions() {
+            const isAdmin = Auth.isAdmin();
+            document.querySelectorAll('.nav-tab.admin-only').forEach(el => {
+                if (isAdmin) el.classList.remove('hidden-tab');
+                else { el.classList.add('hidden-tab'); if (el.classList.contains('active')) switchPage(
+                        'page-pickup'); }
+            });
+            document.querySelectorAll('.admin-only').forEach(el => { if (isAdmin) el.style.display = '';
+                else el.style.display = 'none'; });
+            const user = Auth.getCurrentUser();
+            if (user) {
+                document.getElementById('headerUsername').textContent = user.username;
+                const tag = document.getElementById('headerRoleTag');
+                tag.textContent = user.role === 'admin' ? '管理员' : '员工';
+                tag.className = 'role-tag ' + user.role;
+            }
+        }
+
+        function switchPage(pageId) {
+            const adminPages = ['page-projects', 'page-persons', 'page-add-material', 'page-datacenter'];
+            if (adminPages.includes(pageId) && !Auth.isAdmin()) return;
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const target = document.getElementById(pageId);
+            if (target) target.classList.add('active');
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.toggle('active', tab.dataset.page ===
+                pageId));
+            if (pageId === 'page-detail') renderDetail();
+            if (pageId === 'page-finance') renderFinance();
+            if (pageId === 'page-inventory') renderInventory();
+            if (pageId === 'page-projects') renderProjects();
+            if (pageId === 'page-persons') renderPersons();
+            if (pageId === 'page-add-material') renderMaterialList();
+            if (pageId === 'page-datacenter') { updateDataCenterStatus();
+                renderUserList(); }
+            if (pageId === 'page-pickup') { populatePickupOptions();
+                renderPickupTable();
+                updatePickupStockSizes(); }
+            if (pageId === 'page-storage') { renderStorageTable(); }
+        }
+
+        // ===== 登录 =====
+        document.getElementById('loginBtn').addEventListener('click', function() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            const errorEl = document.getElementById('loginError');
+            if (!username || !password) { errorEl.textContent = '⚠️ 请输入用户名和密码'; return; }
+            const user = Auth.login(username, password);
+            if (user) {
+                errorEl.textContent = '';
+                document.getElementById('loginOverlay').classList.add('hidden');
+                document.getElementById('app').style.display = 'block';
+                initAppAfterLogin();
+            } else {
+                errorEl.textContent = '❌ 用户名或密码错误';
+            }
+        });
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            if (confirm('确定要登出吗？')) {
+                Auth.logout();
+                document.getElementById('loginOverlay').classList.remove('hidden');
+                document.getElementById('app').style.display = 'none';
+            }
+        });
+
+        // 自动登录
+        (function() {
+            const session = Auth.getSession();
+            if (session) {
+                const users = Auth.getUsers();
+                const valid = users.find(u => u.username === session.username && u.role === session.role);
+                if (valid) {
+                    document.getElementById('loginOverlay').classList.add('hidden');
+                    document.getElementById('app').style.display = 'block';
+                    initAppAfterLogin();
+                    return;
+                } else { Auth.logout(); }
+            }
+            document.getElementById('loginOverlay').classList.remove('hidden');
+            document.getElementById('app').style.display = 'none';
+        })();
+    </script>
+</body>
+</html>
